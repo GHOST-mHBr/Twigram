@@ -4,7 +4,6 @@ import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import oop.prj.DB.DBManager;
 import oop.prj.model.AdPost;
 import oop.prj.model.BusinessUser;
 import oop.prj.model.Message;
@@ -12,8 +11,6 @@ import oop.prj.model.NormalUser;
 import oop.prj.model.Post;
 import oop.prj.model.RawUser;
 
-import com.diogonunes.jcolor.AnsiFormat;
-import com.diogonunes.jcolor.Attribute;
 import static com.diogonunes.jcolor.Ansi.colorize;
 import static com.diogonunes.jcolor.Attribute.*;
 
@@ -54,8 +51,6 @@ public class App {
 
         NormalUser.fetchData();
         BusinessUser.fetchData();
-
-        System.out.println(colorize("G",YELLOW_TEXT(),MAGENTA_TEXT()));
 
         while (true) {
             String line = sc.nextLine();

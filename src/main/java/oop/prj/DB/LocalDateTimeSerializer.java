@@ -29,6 +29,9 @@ public class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
 
     @Override
     public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+        if(src == null){
+            return null;
+        }
         JsonObject jo = new JsonObject();
         jo.addProperty("String value", src.toString());
         return jo;

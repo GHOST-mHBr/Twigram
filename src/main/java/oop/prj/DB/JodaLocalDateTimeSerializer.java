@@ -16,6 +16,5 @@ public class JodaLocalDateTimeSerializer implements JsonSerializer<LocalDateTime
         JsonObject jo = new JsonObject();
         jo.addProperty("String value",src.toString());
         return jo;
-    }
-    
+    }   
 }

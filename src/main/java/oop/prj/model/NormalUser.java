@@ -3,6 +3,8 @@ package oop.prj.model;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import com.google.gson.annotations.Expose;
+
 import oop.prj.DB.DBField;
 import oop.prj.DB.DBTable;
 
@@ -12,7 +14,8 @@ public class NormalUser extends RawUser {
     @DBField(name = "posts")
     ArrayList<Integer> postIds = new ArrayList<>();
 
-    ArrayList<Post> allPosts = new ArrayList<>();
+    @Expose(serialize = false, deserialize = false)
+    transient ArrayList<Post> allPosts = new ArrayList<>();
 
     public NormalUser() {
     }

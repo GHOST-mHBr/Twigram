@@ -2,6 +2,8 @@ package oop.prj.model;
 
 import java.time.LocalDateTime;
 
+import com.google.gson.annotations.Expose;
+
 import oop.prj.DB.DBAutoIncrement;
 import oop.prj.DB.DBField;
 import oop.prj.DB.DBPrimaryKey;
@@ -21,8 +23,9 @@ public abstract class RawMessage {
 
     @DBField(name = "owner_id")
     Integer ownerId = null;
-
-    transient RawUser owner = null;
+    
+    @Expose(serialize = false, deserialize = false)
+    RawUser owner = null;
 
     // transient static ArrayList<RawMessage> allMessages = new ArrayList<>();
 
@@ -53,5 +56,9 @@ public abstract class RawMessage {
 
     public Integer getId() {
         return id;
+    }
+
+    public void setId(Integer id){
+        this.id = id;
     }
 }

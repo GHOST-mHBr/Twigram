@@ -3,8 +3,6 @@ package oop.prj.DB;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 
-
-import com.google.gson.Gson;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -18,23 +16,25 @@ import oop.prj.model.Sendable;
 public class SendableDeserializer implements JsonDeserializer<Sendable> {
 
     private static SendableDeserializer instance = null;
-    private static Gson gson = new Gson();
     private static HashMap<String, Class<? extends Sendable>> mapper = new HashMap<>();
 
-    static{
+    static {
         mapper.put("Group", Group.class);
         mapper.put("RawUser", RawUser.class);
     }
 
-    private SendableDeserializer(){}
-    private SendableDeserializer(SendableDeserializer other){}
+    private SendableDeserializer() {
+    }
+
+    private SendableDeserializer(SendableDeserializer other) {
+    }
 
     public static void register(String classNameStr, Class<? extends Sendable> class_) {
         mapper.put(classNameStr, class_);
     }
 
-    public static SendableDeserializer getInstance(){
-        if(instance == null)
+    public static SendableDeserializer getInstance() {
+        if (instance == null)
             instance = new SendableDeserializer();
         return instance;
     }
@@ -42,9 +42,20 @@ public class SendableDeserializer implements JsonDeserializer<Sendable> {
     @Override
     public Sendable deserialize(JsonElement e, Type t, JsonDeserializationContext des)
             throws JsonParseException {
-        JsonObject jobj = e.getAsJsonObject();
-        String type = jobj.get("type").getAsString();
-        return gson.fromJson(jobj, mapper.get(type));
+        JsonObject jo = e.getAsJsonObject();
+        Integer id =Integer.parseInt(jo.get("receiver_id").getAsString());
+        Class<?> res;
+        try {
+            res = Class.forName(jo.get("receiver_class_name").getAsString());
+            if(res.getSimpleName().equals("RawUser")){
+                return RawUser.getWithId(id);
+            }else if(res.getSimpleName().equals("Group")) {
+                return Group.getWithId(id);
+            }
+        } catch (ClassNotFoundException e1) {
+            e1.printStackTrace();
+        }
+        return null;
     }
 
 }

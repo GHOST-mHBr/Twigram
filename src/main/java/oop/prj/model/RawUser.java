@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import com.google.gson.annotations.Expose;
+
 import oop.prj.App;
 import oop.prj.DB.DBAutoIncrement;
 import oop.prj.DB.DBField;
@@ -22,11 +24,13 @@ public class RawUser implements Sendable {
     @DBField(name = "followers")
     private ArrayList<Integer> followersIds = new ArrayList<>();
 
+    @Expose(serialize = false, deserialize = false)
     private ArrayList<RawUser> followers = new ArrayList<>();
 
     @DBField(name = "followings")
     private ArrayList<Integer> followingsIds = new ArrayList<>();
 
+    @Expose(serialize = false, deserialize = false)
     private ArrayList<RawUser> followings = new ArrayList<>();
 
     @DBField(name = "sent_messages")
@@ -35,9 +39,12 @@ public class RawUser implements Sendable {
     @DBField(name = "received_messages")
     private ArrayList<Integer> receivedMessagesIds = new ArrayList<>();
 
-    private ArrayList<Message> sentMessages = new ArrayList<>();
-    private ArrayList<Message> receivedMessages = new ArrayList<>();
-    static ArrayList<RawUser> allUsers = new ArrayList<>();
+    @Expose(serialize = false, deserialize = false)
+    transient private ArrayList<Message> sentMessages = new ArrayList<>();
+    @Expose(serialize = false, deserialize = false)
+    transient private ArrayList<Message> receivedMessages = new ArrayList<>();
+    @Expose(serialize = false, deserialize = false)
+    transient static ArrayList<RawUser> allUsers = new ArrayList<>();
 
     @DBField(name = "banned_users")
     ArrayList<Integer> bannedUsersIds = new ArrayList<>();
@@ -56,7 +63,8 @@ public class RawUser implements Sendable {
 
     @DBField(name = "user_id")
     private String userId = null;
-
+    
+    @Expose(serialize = false, deserialize = false)
     private static boolean fetched = false;
 
     public String getUserId() {
@@ -123,7 +131,7 @@ public class RawUser implements Sendable {
             var user = allUsers.get(i);
             user.followersIds = user.followers.stream().map(e -> e.getID())
                     .collect(Collectors.toCollection(ArrayList::new));
-                    
+
             user.followingsIds = user.followings.stream().map(e -> e.getID())
                     .collect(Collectors.toCollection(ArrayList::new));
 
@@ -360,13 +368,23 @@ public class RawUser implements Sendable {
     }
 
     public void printMessages() {
-        if(receivedMessages.size() > 0){
-            for(var m : receivedMessages){
+        if (receivedMessages.size() > 0) {
+            for (var m : receivedMessages) {
                 App.prLn(m.toString());
             }
-        }else{
+        } else {
             App.prLn("You don't have any message!");
         }
+    }
+
+    @Override
+    public Integer getReceiverId() {
+        return id;
+    }
+
+    @Override
+    public Class<? extends Sendable> getReceiverClass() {
+        return RawUser.class;
     }
 
 }

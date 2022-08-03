@@ -1,6 +1,7 @@
 package oop.prj.model;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import oop.prj.DB.DBAutoIncrement;
@@ -22,9 +23,6 @@ public class Group implements Sendable {
     @DBAutoIncrement
     Integer id = null;
 
-    @DBField(name = "groupId")
-    String groupId;
-
     @DBField(name = "name")
     String name = null;
 
@@ -38,15 +36,13 @@ public class Group implements Sendable {
                 throw new IllegalArgumentException();
             }
         }
-
         this.name = name;
         this.admin = admin;
-        this.groupId = groupId;
         allGroups.add(this);
     }
 
-    public String getGroupId() {
-        return new String(groupId);
+    public Integer getGroupId() {
+        return id;
     }
 
     public void addUser(RawUser user, RawUser adder) {
@@ -69,5 +65,24 @@ public class Group implements Sendable {
     @Override
     public void messageReceived(Message msg) {
         allMessages.add(msg);
+    }
+
+    @Override
+    public Integer getReceiverId() {
+        return id;
+    }
+
+    @Override
+    public Class<? extends Sendable> getReceiverClass() {
+        return Group.class;
+    }
+
+    public static Group getWithId(Integer id) {
+        for (var g : allGroups) {
+            if (g.getGroupId() == id) {
+                return g;
+            }
+        }
+        throw new NoSuchElementException("No Such a Group exits");
     }
 }

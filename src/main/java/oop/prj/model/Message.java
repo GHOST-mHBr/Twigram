@@ -13,9 +13,9 @@ import oop.prj.DB.DBTable;
 public class Message extends RawMessage {
 
     @DBField(name = "receiver")
-    transient private Sendable receiver = null;
+    private Sendable receiver = null;
 
-    private static ArrayList<Message> allMessages = new ArrayList<>();
+    transient private static ArrayList<Message> allMessages = new ArrayList<>();
 
     private static boolean fetched = false;
 
@@ -47,16 +47,16 @@ public class Message extends RawMessage {
     @Override
     public String toString() {
         String res = "\n--------\n";
-        res += dateTime.format(DateTimeFormatter.ISO_DATE);
-        
+        res += dateTime.format(DateTimeFormatter.ISO_DATE) + "\n";
+        res += dateTime.format(DateTimeFormatter.ISO_LOCAL_TIME);
         res += "\nfrom ";
         res += owner.getUserName();
         res += " to ";
         if (receiver instanceof Group) {
             Group grR = (Group) receiver;
-            res += grR.getGroupId();
+            res += "group: " + grR.getGroupId();
         } else if (receiver instanceof RawUser) {
-            res += ((RawUser) receiver).getUserName();
+            res += "You";
         }
         res += "\n--------\n";
         res += context;
@@ -66,7 +66,14 @@ public class Message extends RawMessage {
     }
 
     public static void fetchData() {
-        allMessages.forEach(e -> e.owner = RawUser.getWithId(e.ownerId));
+        allMessages.forEach(e -> {
+            RawUser user = RawUser.getWithId(e.ownerId);
+            if (user == null) {
+                throw new IllegalStateException();
+            }
+            e.owner = user;
+        });
+        
         if (!fetched) {
             try {
                 allMessages = DBManager.getAllObjects(Message.class);

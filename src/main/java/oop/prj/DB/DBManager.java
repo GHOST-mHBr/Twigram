@@ -18,6 +18,7 @@ import java.util.InputMismatchException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.google.protobuf.Message;
 
 import oop.prj.model.Sendable;
 
@@ -51,6 +52,9 @@ public class DBManager {
         builder.registerTypeAdapter(LocalDateTime.class, LocalDateTimeSerializer.getInstance());
         builder.registerTypeAdapter(LocalDateTime.class, LocalDateTimeDeserializer.getInstance());
         builder.registerTypeAdapter(Sendable.class, SendableDeserializer.getInstance());
+        builder.registerTypeAdapter(Sendable.class, SendableSerializer.getInstance());
+        builder.registerTypeAdapter(Message.class, MessageSerializer.getInstance());
+        builder.registerTypeAdapter(Message.class, MessageDeserializer.getInstance());
         gson = builder.create();
     }
 
@@ -84,10 +88,9 @@ public class DBManager {
                     }
                     try {
                         Object r = f.get(object);
+                        
                         if (needJson(r)) {
-                            sub_query_record_values += "\'" + gson.toJson(r) + "\'";
-                        } else if (r instanceof LocalDateTime) {
-                            sub_query_record_values += "\'" + gson.toJson(r) + "\'";
+                            sub_query_record_values += "\'" + gson.toJson(f.getType().cast(r)) + "\'";
                         } else {
                             sub_query_record_values += "\'" + r + "\'";
                         }
