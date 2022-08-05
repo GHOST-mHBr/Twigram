@@ -52,7 +52,7 @@ public class User implements Sendable {
     transient static ArrayList<User> allUsers = new ArrayList<>();
 
     @DBField(name = "banned_users")
-    ArrayList<Integer> bannedUsersIds = new ArrayList<>();
+    private ArrayList<Integer> bannedUsersIds = new ArrayList<>();
 
     @DBField(name = "username")
     private String username;
@@ -100,13 +100,9 @@ public class User implements Sendable {
 
     public void post(String text) {
         Post post = new Post(text, this);
-        // posts.add(Post);
-        postIds.add(post.getID());
+        postIds.add(post.getId());
     }
 
-    // public ArrayList<Post> getAllPosts() {
-    // return posts;
-    // }
     public ArrayList<Integer> getPostsIds() {
         return postIds;
     }
@@ -123,28 +119,6 @@ public class User implements Sendable {
             allUsers.addAll(DBManager.getAllObjects(User.class));
     }
 
-    // public static void fetchData() {
-    // Message.fetchData();
-    // if (!fetched) {
-    // fetched = true;
-    // for (RawUser user : allUsers) {
-    // user.followers = user.followersIds.stream().map(e -> getWithId(e))
-    // .collect(Collectors.toCollection(ArrayList::new));
-
-    // user.followings = user.followingsIds.stream().map(e -> getWithId(e))
-    // .collect(Collectors.toCollection(ArrayList::new));
-
-    // user.sentMessages = user.sentMessagesIds.stream().map(e ->
-    // Message.getWithId(e))
-    // .collect(Collectors.toCollection(ArrayList::new));
-
-    // user.receivedMessages = user.receivedMessagesIds.stream().map(e ->
-    // Message.getWithId(e))
-    // .collect(Collectors.toCollection(ArrayList::new));
-    // }
-    // }
-    // }
-
     protected static void syncWithDB() {
         for (int i = 0; i < allUsers.size(); i++) {
             var user = allUsers.get(i);
@@ -153,24 +127,6 @@ public class User implements Sendable {
 
             user.followingsIds = user.followings.stream().map(e -> e.getID())
                     .collect(Collectors.toCollection(ArrayList::new));
-
-            // user.sentMessagesIds = user.sentMessages.stream().map(e -> e.getId())
-            // .collect(Collectors.toCollection(ArrayList::new));
-
-            // user.receivedMessagesIds = user.receivedMessages.stream().map(e -> e.getId())
-            // .collect(Collectors.toCollection(ArrayList::new));
-
-            // user.postIds = user.posts.stream().map(e ->
-            // e.getId()).collect(Collectors.toCollection(ArrayList::new));
-            // if (user instanceof BusinessUser) {
-            // var bUser = (BusinessUser) user;
-            // bUser.postsIds = bUser.posts.stream().map(e -> e.getId())
-            // .collect(Collectors.toCollection(ArrayList::new));
-            // } else {
-            // var nUser = (NormalUser) user;
-            // nUser.postIds = nUser.allPosts.stream().map(e -> e.getId())
-            // .collect(Collectors.toCollection(ArrayList::new));
-            // }
         }
 
     }
@@ -255,6 +211,15 @@ public class User implements Sendable {
         return null;
     }
 
+    public static User getWithId(String id) {
+        try {
+            Integer id_ = Integer.parseInt(id);
+            return getWithId(id_);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Bad id!");
+        }
+    }
+
     public void setPhoneNumber(String phoneNumber) {
         if (phoneNumber.matches("\\+[0-9]{12}") || phoneNumber.matches("09[0-9]{9}"))
             this.phoneNumber = phoneNumber;
@@ -305,7 +270,7 @@ public class User implements Sendable {
     public ArrayList<Message> getReceivedMsgsFrom(User sender) {
         ArrayList<Message> result = new ArrayList<>();
         for (Integer msgId : receivedMessagesIds) {
-            var msg= Message.getWithId(msgId);
+            var msg = Message.getWithId(msgId);
             if (msg.getReceiver().equals(this) && msg.getOwner().equals(sender)) {
                 result.add(msg);
             }
@@ -346,10 +311,8 @@ public class User implements Sendable {
         }
 
         User otherUser = (User) other;
-        if (otherUser.getID() == this.getID()) {
-            return true;
-        }
-        return false;
+        return (otherUser.getID() == this.getID());
+
     }
 
     public String getInfo() {
@@ -407,10 +370,10 @@ public class User implements Sendable {
     public void printAndSeeMessages() {
         if (receivedMessagesIds.size() > 0) {
             for (var m : getAllReceivedMessages()) {
-                if(!m.hasSeen(this)){
-                    App.prLn(colorize(m.toString() , BOLD() , BLUE_TEXT()) );
+                if (!m.hasSeen(this)) {
+                    App.prLn(colorize(m.toString(), BOLD(), BLUE_TEXT()));
                     m.seen(this);
-                }else{
+                } else {
                     App.prLn(m.toString());
                 }
             }
@@ -419,11 +382,14 @@ public class User implements Sendable {
         }
     }
 
-    public void printPosts() {
+    public void printPosts(User watcher) {
         for (Post post : postIds.stream().map(e -> Post.getWithId(e)).collect(Collectors.toList())) {
+            post.addSeen(watcher);
             if (userType.equals(UserType.BUSINESS))
-                App.prLn(colorize("Advertisement", WHITE_TEXT(), RED_BACK(), ITALIC()));
+                App.prLn("\n" + colorize("Advertisement", WHITE_TEXT(), RED_BACK(), ITALIC()));
             App.prLn(post.toString());
+            App.prLn(colorize(post.getAllLikes().size() + " likes", RED_TEXT(), BOLD()));
+            App.prLn(colorize(post.getAllWatches().size() + " watches", GREEN_TEXT(), BOLD()));
         }
     }
 

@@ -2,24 +2,27 @@ package oop.prj.model;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.TreeSet;
 
 import oop.prj.DB.DBField;
 import oop.prj.DB.DBManager;
 import oop.prj.DB.DBTable;
 
+import static com.diogonunes.jcolor.Ansi.colorize;
+import static com.diogonunes.jcolor.Attribute.*;
+
 @DBTable(tableName = "posts")
 public class Post extends RawMessage implements Comparable<Post> {
 
     @DBField(name = "likes")
-    ArrayList<Like> likes = new ArrayList<>();
+    protected TreeSet<Like> likes = new TreeSet<>();
 
     @DBField(name = "watches")
-    ArrayList<Seen> watches = new ArrayList<>();
+    protected TreeSet<Seen> watches = new TreeSet<>();
 
     @DBField(name = "comments")
-    private ArrayList<Comment> comments = new ArrayList<>();
+    protected ArrayList<Comment> comments = new ArrayList<>();
 
     private static ArrayList<Post> allPosts = new ArrayList<>();
 
@@ -42,17 +45,8 @@ public class Post extends RawMessage implements Comparable<Post> {
         return instance;
     }
 
-    public Integer getID() {
-        return id;
-    }
-
-    public boolean like(User liker) {
-        // TODO check like conditions
-        if (!likes.contains(new Like(liker))) {
-            likes.add(new Like(liker));
-            return true;
-        }
-        return false;
+    public void like(User liker) {
+        likes.add(new Like(liker));
     }
 
     public void comment(String text, User user) {
@@ -60,25 +54,34 @@ public class Post extends RawMessage implements Comparable<Post> {
     }
 
     public void addSeen(User user) {
-        if (user != null && !watches.contains(new Seen(user)))
-            watches.add(new Seen(user));
+        Seen s = new Seen(user);
+        watches.add(s);
     }
 
-    public List<Like> getAllLikes() {
+    public TreeSet<Like> getAllLikes() {
         return likes;
     }
 
-    public List<Seen> getAllWatches() {
+    public TreeSet<Seen> getAllWatches() {
         return watches;
     }
 
     public static Post getWithId(Integer id) {
         for (Post post : allPosts) {
-            if (post.getID().equals(id)) {
+            if (post.getId().equals(id)) {
                 return post;
             }
         }
         throw new NoSuchElementException("No such a post exists");
+    }
+
+    public static Post getWithId(String id) {
+        try {
+            Integer id_ = Integer.parseInt(id);
+            return getWithId(id_);
+        } catch (NumberFormatException e) {
+            throw new NoSuchElementException("No such a id exists");
+        }
     }
 
     @Override
@@ -89,12 +92,14 @@ public class Post extends RawMessage implements Comparable<Post> {
     @Override
     public String toString() {
         var formatter = DateTimeFormatter.ofPattern("yyyy LLL dd\nhh:mm a");
-        String res = "----------\n";
+        String res = "";
+        // res += "from: " + getOwner().getUserName();
+        res += dateTime.format(formatter);
+        res += "\n";
+        res += colorize("Post Id: " + id + " ", GREEN_BACK(), ITALIC(), BOLD(), UNDERLINE());
+        res += "\n----------\n";
         res += context;
         res += "\n----------";
-        res += "\nfrom: " + getOwner().getUserName();
-        res += "\nat:\n" + dateTime.format(formatter);
-        res += "\n----------\n";
 
         return res;
     }
@@ -109,7 +114,7 @@ public class Post extends RawMessage implements Comparable<Post> {
         }
 
         Post otherPost = (Post) other;
-        if (getID() == otherPost.getID()) {
+        if (getId() == otherPost.getId()) {
             return true;
         }
         return false;
@@ -135,7 +140,6 @@ public class Post extends RawMessage implements Comparable<Post> {
                     DBManager.insert(post);
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }

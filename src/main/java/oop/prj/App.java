@@ -4,12 +4,13 @@ import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+
 import oop.prj.DB.DBManager;
+import oop.prj.model.Comment;
 import oop.prj.model.Message;
 import oop.prj.model.Post;
 import oop.prj.model.User;
 import oop.prj.model.User.UserType;
-
 
 public class App {
 
@@ -42,6 +43,7 @@ public class App {
 
         // DBManager.createTableIfNotExist(NormalUser.class);
         DBManager.createTableIfNotExist(Message.class);
+        DBManager.createTableIfNotExist(Comment.class);
         // DBManager.createTableIfNotExist(User.class);
         // DBManager.createTableIfNotExist(Post.class);
         // DBManager.createTableIfNotExist(BusinessUser.class);
@@ -152,26 +154,48 @@ public class App {
                         break;
                     case "show_posts": {
                         if (loggedInUser == null) {
-                            throw new IllegalArgumentException("Please login first!");
+                            throw new IllegalStateException("Please login first!");
                         }
-                        loggedInUser.printPosts();
+                        User user = User.getUser(getInput("Posts from who?"));
+                        user.printPosts(loggedInUser);
+
                         break;
                     }
-                    case "create_group":
+                    case "create_group": {
 
                         break;
+                    }
 
-                    case "post":
+                    case "post": {
                         if (loggedInUser == null) {
                             throw new NullPointerException("Please login first");
                         }
                         loggedInUser.post(getInput("Enter your post text"));
                         break;
+                    }
+                    case "like":{
+                        if(loggedInUser == null){
+                            throw new IllegalArgumentException("Please login first");
+                        }
+                        if(lineParts.length < 3 || lineParts[1].equals("") || lineParts[2].equals("")){
+                            throw new IllegalArgumentException("bas usage\nuse the following syntax:\nlike [post,comment] [id]\n");
+                        }
+                        switch(lineParts[1].toLowerCase()){
+                            case "post":
+                            Post.getWithId(lineParts[2]).like(loggedInUser);
+                            break;
 
-                    case "comment":
+                            case "comment":
+                            Comment.getWithId(lineParts[2]).like(loggedInUser);
+                            break;
+                        }
+                        prLn("done.");
+
+                    }
+                    case "comment": {
 
                         break;
-
+                    }
                 }
             } catch (Exception e) {
                 prError(e);

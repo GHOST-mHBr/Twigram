@@ -13,6 +13,7 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.InputMismatchException;
 import java.util.TreeSet;
 
@@ -115,26 +116,28 @@ public class DBManager {
         }
     }
 
-    public static boolean exists(Object obj)
-            throws IllegalArgumentException, IllegalAccessException, InstantiationException,
-            InvocationTargetException, NoSuchMethodException, SecurityException, SQLException {
-        if (obj.getClass().isAnnotationPresent(DBTable.class)) {
-            String tableName = obj.getClass().getAnnotation(DBTable.class).tableName();
-            for (Field f : getAllFields(obj.getClass())) {
-                f.setAccessible(true);
-                if (f.isAnnotationPresent(DBPrimaryKey.class)) {
-                    Integer value = (Integer) f.get(obj);
-                    var colName = f.getAnnotation(DBField.class).name();
-                    String query = "SELECT 1 FROM " + tableName + " WHERE " + colName + "=" + value;
-                    getConnection();
-                    Statement st = conn.createStatement();
-                    var result = st.executeQuery(query);
-                    if (result.next()) {
-                        return true;
+    public static boolean exists(Object obj) {
+        try {
+            if (obj.getClass().isAnnotationPresent(DBTable.class)) {
+                String tableName = obj.getClass().getAnnotation(DBTable.class).tableName();
+                for (Field f : getAllFields(obj.getClass())) {
+                    f.setAccessible(true);
+                    if (f.isAnnotationPresent(DBPrimaryKey.class)) {
+                        Integer value = (Integer) f.get(obj);
+                        var colName = f.getAnnotation(DBField.class).name();
+                        String query = "SELECT 1 FROM " + tableName + " WHERE " + colName + "=" + value;
+                        getConnection();
+                        Statement st = conn.createStatement();
+                        var result = st.executeQuery(query);
+                        if (result.next()) {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return false;
     }
@@ -193,6 +196,16 @@ public class DBManager {
                                     Class<?> type = (Class<?>) ((ParameterizedType) field.getGenericType())
                                             .getActualTypeArguments()[0];
                                     Type t = TypeToken.getParameterized(TreeSet.class, type)
+                                            .getType();
+                                    Object res = gson.fromJson((String) fieldValue, t);
+                                    res = field.getType().cast(res);
+                                    field.set(e, res);
+                                    break;
+                                }
+                                case "HashSet": {
+                                    Class<?> type = (Class<?>) ((ParameterizedType) field.getGenericType())
+                                            .getActualTypeArguments()[0];
+                                    Type t = TypeToken.getParameterized(HashSet.class, type)
                                             .getType();
                                     Object res = gson.fromJson((String) fieldValue, t);
                                     res = field.getType().cast(res);
