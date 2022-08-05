@@ -2,10 +2,9 @@ package oop.prj.model;
 
 import java.time.LocalDateTime;
 
-import com.google.gson.annotations.Expose;
-
 import oop.prj.DB.DBAutoIncrement;
 import oop.prj.DB.DBField;
+import oop.prj.DB.DBManager;
 import oop.prj.DB.DBPrimaryKey;
 
 public abstract class RawMessage {
@@ -23,27 +22,27 @@ public abstract class RawMessage {
 
     @DBField(name = "owner_id")
     Integer ownerId = null;
-    
-    @Expose(serialize = false, deserialize = false)
-    RawUser owner = null;
+
+    // @Expose(serialize = false, deserialize = false)
+    // User owner = null;
 
     // transient static ArrayList<RawMessage> allMessages = new ArrayList<>();
 
     protected RawMessage() {
     }
 
-    protected RawMessage(RawUser owner, String context) {
+    protected RawMessage(User owner, String context) {
         if (owner == null || context == null || context.replaceAll(" ", "").equals("")) {
             throw new IllegalArgumentException("Bad input for post information!\nPlease try again");
         }
-        // ownerId=owner.getID();
-        this.owner = owner;
+        id = DBManager.getLastId(Message.class) + 1;
+        ownerId = owner.getID();
         this.context = context;
         dateTime = LocalDateTime.now();
     }
 
-    public RawUser getOwner() {
-        return owner;
+    public User getOwner() {
+        return User.getWithId(ownerId);
     }
 
     public LocalDateTime getDateTime() {
@@ -58,7 +57,7 @@ public abstract class RawMessage {
         return id;
     }
 
-    public void setId(Integer id){
+    public void setId(Integer id) {
         this.id = id;
     }
 }

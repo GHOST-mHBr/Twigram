@@ -1,34 +1,45 @@
 package oop.prj.DB;
 
 import java.lang.reflect.Type;
-import java.nio.file.attribute.GroupPrincipal;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import oop.prj.model.Group;
 import oop.prj.model.Message;
-import oop.prj.model.RawUser;
+import oop.prj.model.User;
 import oop.prj.model.Sendable;
 
-public class MessageDeserializer implements JsonDeserializer<Message> {
+public class MessageAdapter implements JsonSerializer<Message>, JsonDeserializer<Message> {
 
-    private static MessageDeserializer instance = null;
+    private static MessageAdapter instance = null;
 
-    private MessageDeserializer() {
+    private MessageAdapter() {
+    }
+
+    private MessageAdapter(MessageAdapter other) {
 
     }
 
-    private MessageDeserializer(MessageDeserializer other) {
-
+    @Override
+    public JsonElement serialize(Message src, Type typeOfSrc, JsonSerializationContext context) {
+        JsonObject jo = new JsonObject();
+        jo.addProperty("receiverId", src.getReceiver().getReceiverId());
+        jo.addProperty("receiverClassName", src.getReceiver().getReceiverClass().getName());
+        jo.addProperty("context", src.getContext());
+        jo.addProperty("ownerId", src.getOwner().getID());
+        jo.addProperty("msgId", src.getId());
+        return jo;
     }
 
-    public static MessageDeserializer getInstance() {
+    public static MessageAdapter getInstance() {
         if (instance == null)
-            instance = new MessageDeserializer();
+            instance = new MessageAdapter();
         return instance;
     }
 
@@ -47,12 +58,12 @@ public class MessageDeserializer implements JsonDeserializer<Message> {
         String context = jo.get("context").getAsString();
         Integer messageId = Integer.parseInt(jo.get("msgId").getAsString());
         Sendable receiver = null;
-        if (receiverClass.getSimpleName().equals("RawUser")) {
-            receiver = RawUser.getWithId(receiverId);
+        if (receiverClass.getSimpleName().equals("User")) {
+            receiver = User.getWithId(receiverId);
         } else if (receiverClass.getSimpleName().equals("Group")) {
             receiver = Group.getWithId(receiverId);
         }
-        Message msg = new Message(context, RawUser.getWithId(ownerId), receiver);
+        Message msg = new Message(context, User.getWithId(ownerId), receiver);
         msg.setId(messageId);
 
         return msg;

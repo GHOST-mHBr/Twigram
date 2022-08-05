@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.InputMismatchException;
+import java.util.TreeSet;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,6 +31,18 @@ public class DBManager {
     private static final String DB_PASS = "12021202";
 
     private static Connection conn = null;
+    private static Gson gson = null;
+    private static GsonBuilder builder = null;
+
+    static {
+        builder = new GsonBuilder();
+        builder.registerTypeAdapter(org.joda.time.LocalDateTime.class, JodaLocalDateTimeAdapter.getInstance());
+        builder.registerTypeAdapter(LocalDateTime.class, LocalDateTimeAdapter.getInstance());
+        builder.registerTypeAdapter(Sendable.class, SendableAdapter.getInstance());
+        builder.registerTypeAdapter(Message.class, MessageAdapter.getInstance());
+        builder.registerTypeHierarchyAdapter(Sendable.class, SendableAdapter.getInstance());
+        gson = builder.create();
+    }
 
     private static int getMaxId(String columnName, String tableName) throws SQLException {
         getConnection();
@@ -44,20 +57,6 @@ public class DBManager {
         return index;
     }
 
-    private static Gson gson = null;
-    private static GsonBuilder builder = null;
-
-    static {
-        builder = new GsonBuilder();
-        builder.registerTypeAdapter(LocalDateTime.class, LocalDateTimeSerializer.getInstance());
-        builder.registerTypeAdapter(LocalDateTime.class, LocalDateTimeDeserializer.getInstance());
-        builder.registerTypeAdapter(Sendable.class, SendableDeserializer.getInstance());
-        builder.registerTypeAdapter(Sendable.class, SendableSerializer.getInstance());
-        builder.registerTypeAdapter(Message.class, MessageSerializer.getInstance());
-        builder.registerTypeAdapter(Message.class, MessageDeserializer.getInstance());
-        gson = builder.create();
-    }
-
     public static void insert(Object object) {
         createTableIfNotExist(object.getClass());
         if (object.getClass().isAnnotationPresent(DBTable.class)) {
@@ -69,7 +68,6 @@ public class DBManager {
                     break;
                 }
             }
-
             String query = "INSERT INTO " + tableName + " ";
             String sub_query_record_fields = "";
             String sub_query_record_values = "";
@@ -88,8 +86,9 @@ public class DBManager {
                     }
                     try {
                         Object r = f.get(object);
-                        
+
                         if (needJson(r)) {
+                            // String str = gson.toJson(f.getType().cast(r));
                             sub_query_record_values += "\'" + gson.toJson(f.getType().cast(r)) + "\'";
                         } else {
                             sub_query_record_values += "\'" + r + "\'";
@@ -186,14 +185,21 @@ public class DBManager {
                                     Type t = TypeToken.getParameterized(ArrayList.class, type)
                                             .getType();
                                     Object res = gson.fromJson((String) fieldValue, t);
-                                    // Object res = gson.fromJson((String) fieldValue, t);
+                                    res = field.getType().cast(res);
+                                    field.set(e, res);
+                                    break;
+                                }
+                                case "TreeSet": {
+                                    Class<?> type = (Class<?>) ((ParameterizedType) field.getGenericType())
+                                            .getActualTypeArguments()[0];
+                                    Type t = TypeToken.getParameterized(TreeSet.class, type)
+                                            .getType();
+                                    Object res = gson.fromJson((String) fieldValue, t);
                                     res = field.getType().cast(res);
                                     field.set(e, res);
                                     break;
                                 }
                                 default: {
-                                    // Object res = gson.fromJson((String) fieldValue, field.getType());
-                                    // res = field.getType().cast(res);
                                     field.set(e, gson.fromJson((String) fieldValue, field.getType()));
                                     break;
                                 }
@@ -378,13 +384,18 @@ public class DBManager {
         }
     }
 
-    public static <E> ArrayList<E> getAllObjects(Class<E> class_) throws InstantiationException, IllegalAccessException,
-            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+    public static <E> ArrayList<E> getAllObjects(Class<E> class_) {
         if (class_.isAnnotationPresent(DBTable.class)) {
-            return doSelectQuery("SELECT * FROM " + class_.getAnnotation(DBTable.class).tableName(), class_);
+            try {
+                return doSelectQuery("SELECT * FROM " + class_.getAnnotation(DBTable.class).tableName(), class_);
+            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+                e.printStackTrace();
+            }
         } else {
             throw new InputMismatchException("The class does not annotate DBTable");
         }
+        return null;
     }
 
 }

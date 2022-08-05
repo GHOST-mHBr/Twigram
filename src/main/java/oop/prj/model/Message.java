@@ -1,9 +1,10 @@
 package oop.prj.model;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.NoSuchElementException;
+import java.util.TreeSet;
 
 import oop.prj.DB.DBField;
 import oop.prj.DB.DBManager;
@@ -15,20 +16,34 @@ public class Message extends RawMessage {
     @DBField(name = "receiver")
     private Sendable receiver = null;
 
+    @DBField(name = "watches")
+    private TreeSet<Integer> watchersIds = new TreeSet<>();
+
     transient private static ArrayList<Message> allMessages = new ArrayList<>();
+
 
     private static boolean fetched = false;
 
     public Message() {
     }
 
-    public Message(String context, RawUser owner, Sendable receiver) {
+    public Message(String context, User owner, Sendable receiver) {
         super(owner, context);
         if (receiver == null) {
             throw new IllegalArgumentException("The receiver is null");
         }
         this.receiver = receiver;
         allMessages.add(this);
+    }
+
+    public TreeSet<Integer> getAllWatchersIds(){return watchersIds;}
+
+    public boolean hasSeen(User user){
+        return watchersIds.contains(user.getID());
+    }
+
+    public void seen(User user){
+        watchersIds.add(user.getID());
     }
 
     public Sendable getReceiver() {
@@ -46,16 +61,16 @@ public class Message extends RawMessage {
 
     @Override
     public String toString() {
+        var formatter = DateTimeFormatter.ofPattern("yyyy LLL dd\nhh:mm a");
         String res = "\n--------\n";
-        res += dateTime.format(DateTimeFormatter.ISO_DATE) + "\n";
-        res += dateTime.format(DateTimeFormatter.ISO_LOCAL_TIME);
+        res += dateTime.format(formatter);
         res += "\nfrom ";
-        res += owner.getUserName();
+        res += getOwner().getUserName();
         res += " to ";
-        if (receiver instanceof Group) {
+        if (receiver.getReceiverClass().getSimpleName().equals("Group")) {
             Group grR = (Group) receiver;
             res += "group: " + grR.getGroupId();
-        } else if (receiver instanceof RawUser) {
+        } else {
             res += "You";
         }
         res += "\n--------\n";
@@ -66,29 +81,16 @@ public class Message extends RawMessage {
     }
 
     public static void fetchData() {
-        allMessages.forEach(e -> {
-            RawUser user = RawUser.getWithId(e.ownerId);
-            if (user == null) {
-                throw new IllegalStateException();
-            }
-            e.owner = user;
-        });
-        
         if (!fetched) {
-            try {
-                allMessages = DBManager.getAllObjects(Message.class);
-                fetched = true;
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            allMessages = DBManager.getAllObjects(Message.class);
+            
+            fetched = true;
         }
     }
 
     public static void saveData() {
         for (Message msg : allMessages) {
-            msg.ownerId = msg.owner.getID();
+            // msg.ownerId = msg.owner.getID();
             try {
                 if (DBManager.exists(msg)) {
                     DBManager.update(msg);
@@ -99,6 +101,12 @@ public class Message extends RawMessage {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void loadAllObjects() {
+        if (allMessages.size() == 0) {
+            allMessages.addAll(DBManager.getAllObjects(Message.class));
         }
     }
 

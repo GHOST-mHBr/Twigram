@@ -1,6 +1,6 @@
 package oop.prj.model;
 
-import java.lang.reflect.InvocationTargetException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -12,25 +12,29 @@ import oop.prj.DB.DBTable;
 @DBTable(tableName = "posts")
 public class Post extends RawMessage implements Comparable<Post> {
 
-    @DBField(name = "likers")
-    ArrayList<RawUser> likers = new ArrayList<>();
+    @DBField(name = "likes")
+    ArrayList<Like> likes = new ArrayList<>();
 
     @DBField(name = "watches")
-    ArrayList<RawUser> watches = new ArrayList<>();
+    ArrayList<Seen> watches = new ArrayList<>();
 
     @DBField(name = "comments")
-    protected ArrayList<Comment> comments = new ArrayList<>();
+    private ArrayList<Comment> comments = new ArrayList<>();
 
     private static ArrayList<Post> allPosts = new ArrayList<>();
 
     private static boolean fetched = false;
 
-    protected Post(String context, RawUser owner) {
+    public Post() {
+    }
+
+    protected Post(String context, User owner) {
         super(owner, context);
+        setId(DBManager.getLastId(Post.class) + 1);
         allPosts.add(this);
     }
 
-    public static Post makePost(String context, RawUser owner) {
+    public static Post makePost(String context, User owner) {
         if (context.equals("") || owner.equals(null)) {
             throw new IllegalArgumentException();
         }
@@ -42,29 +46,29 @@ public class Post extends RawMessage implements Comparable<Post> {
         return id;
     }
 
-    public boolean like(RawUser liker) {
+    public boolean like(User liker) {
         // TODO check like conditions
-        if (likers != null && !likers.contains(liker)) {
-            likers.add(liker);
+        if (!likes.contains(new Like(liker))) {
+            likes.add(new Like(liker));
             return true;
         }
         return false;
     }
 
-    public void comment(String text, RawUser user) {
+    public void comment(String text, User user) {
         comments.add(new Comment(text, user, this));
     }
 
-    public void addSeen(RawUser user) {
-        if (user != null && !watches.contains(user))
-            watches.add(user);
+    public void addSeen(User user) {
+        if (user != null && !watches.contains(new Seen(user)))
+            watches.add(new Seen(user));
     }
 
-    public List<RawUser> getAllLikes() {
-        return likers;
+    public List<Like> getAllLikes() {
+        return likes;
     }
 
-    public List<RawUser> getAllWatches() {
+    public List<Seen> getAllWatches() {
         return watches;
     }
 
@@ -84,12 +88,12 @@ public class Post extends RawMessage implements Comparable<Post> {
 
     @Override
     public String toString() {
-        String res = "Post:\n";
-        res += "----------\n";
+        var formatter = DateTimeFormatter.ofPattern("yyyy LLL dd\nhh:mm a");
+        String res = "----------\n";
         res += context;
         res += "\n----------";
-        res += "\nfrom: " + owner.getUserName();
-        res += "\nat:" + dateTime.toString();
+        res += "\nfrom: " + getOwner().getUserName();
+        res += "\nat:\n" + dateTime.format(formatter);
         res += "\n----------\n";
 
         return res;
@@ -114,20 +118,16 @@ public class Post extends RawMessage implements Comparable<Post> {
 
     public static void fetchData() {
         if (!fetched) {
-            try {
-                allPosts = DBManager.getAllObjects(Post.class);
-                fetched = true;
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            allPosts = DBManager.getAllObjects(Post.class);
+
+            fetched = true;
         }
     }
 
     public static void saveData() {
         for (int i = 0; i < allPosts.size(); i++) {
             Post post = allPosts.get(i);
+            // post.syncData();
             try {
                 if (DBManager.exists(post)) {
                     DBManager.update(post);
@@ -138,6 +138,12 @@ public class Post extends RawMessage implements Comparable<Post> {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
+        }
+    }
+
+    public static void loadAllObjects() {
+        if (allPosts.size() == 0) {
+            allPosts.addAll(DBManager.getAllObjects(Post.class));
         }
     }
 

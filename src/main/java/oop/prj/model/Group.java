@@ -12,9 +12,9 @@ import oop.prj.DB.DBTable;
 @DBTable(tableName = "groups")
 public class Group implements Sendable {
     private String type = "Group";
-    ArrayList<RawUser> ordinaryUsers = new ArrayList<>();
+    ArrayList<User> ordinaryUsers = new ArrayList<>();
     ArrayList<Message> allMessages = new ArrayList<>();
-    ArrayList<RawUser> bannedUsers = new ArrayList<>();
+    ArrayList<User> bannedUsers = new ArrayList<>();
 
     static ArrayList<Group> allGroups = new ArrayList<>();
 
@@ -27,9 +27,9 @@ public class Group implements Sendable {
     String name = null;
 
     @DBField(name = "admin")
-    RawUser admin = null;
+    User admin = null;
 
-    public Group(String name, String groupId, RawUser admin) throws IllegalArgumentException {
+    public Group(String name, String groupId, User admin) throws IllegalArgumentException {
 
         for (Group g : allGroups) {
             if (g.getGroupId().equals(groupId)) {
@@ -45,18 +45,18 @@ public class Group implements Sendable {
         return id;
     }
 
-    public void addUser(RawUser user, RawUser adder) {
+    public void addUser(User user, User adder) {
         if (adder.equals(admin) && !bannedUsers.contains(user))
             ordinaryUsers.add(user);
     }
 
-    public void addUsers(ArrayList<RawUser> users, RawUser adder) {
+    public void addUsers(ArrayList<User> users, User adder) {
         if (adder.equals(admin)) {
             ordinaryUsers.addAll(users.stream().filter(e -> !bannedUsers.contains(e)).collect(Collectors.toList()));
         }
     }
 
-    public void ban(RawUser user, RawUser banner) {
+    public void ban(User user, User banner) {
         if (banner.equals(admin)) {
             bannedUsers.add(user);
         }

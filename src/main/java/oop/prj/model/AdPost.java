@@ -1,6 +1,5 @@
 package oop.prj.model;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
@@ -8,6 +7,7 @@ import oop.prj.DB.DBField;
 import oop.prj.DB.DBManager;
 import oop.prj.DB.DBTable;
 
+@Deprecated
 @DBTable(tableName = "ads")
 public class AdPost extends RawMessage {
     @DBField(name = "likes")
@@ -21,19 +21,14 @@ public class AdPost extends RawMessage {
 
     private static ArrayList<AdPost> allAds = new ArrayList<>();
 
-    public AdPost(String context, RawUser owner) {
+    public AdPost(String context, User owner) {
         super(owner, context);
         allAds.add(this);
     }
 
     public static void fetchData() {
-        try {
-            allAds = DBManager.getAllObjects(AdPost.class);
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-                | NoSuchMethodException | SecurityException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        allAds = DBManager.getAllObjects(AdPost.class);
+
     }
 
     public static void saveData() {
@@ -51,12 +46,12 @@ public class AdPost extends RawMessage {
         }
     }
 
-    public void addSeen(RawUser user) {
+    public void addSeen(User user) {
         if (!watches.contains(new Seen(user)))
             watches.add(new Seen(user));
     }
 
-    public boolean like(RawUser user) {
+    public boolean like(User user) {
         if (!likes.contains(new Like(user))) {
             likes.add(new Like(user));
             return true;
@@ -72,12 +67,12 @@ public class AdPost extends RawMessage {
         return likes;
     }
 
-    @Override
-    public String toString() {
-        String res = "\\e[31m-----=== Ad Post ===-----\\e[0m";
-        res += owner.getUserName() + ":\n" + context + "\nAd id: " + id + "\n";
-        return res;
-    }
+    // @Override
+    // public String toString() {
+    //     String res = "\\e[31m-----=== Ad Post ===-----\\e[0m";
+    //     res += owner.getUserName() + ":\n" + context + "\nAd id: " + id + "\n";
+    //     return res;
+    // }
 
     public static AdPost getWithId(Integer id) {
         for (var adPost : allAds) {

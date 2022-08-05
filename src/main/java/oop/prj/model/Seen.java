@@ -5,14 +5,14 @@ import java.time.LocalDateTime;
 
 public class Seen {
     LocalDateTime dateTime = null;
-    RawUser watcher = null;
+    User watcher = null;
 
-    public Seen(RawUser user){
+    public Seen(User user){
         watcher = user;
         dateTime = LocalDateTime.now();
     }
 
-    public RawUser getUser(){
+    public User getUser(){
         return watcher;
     }
 

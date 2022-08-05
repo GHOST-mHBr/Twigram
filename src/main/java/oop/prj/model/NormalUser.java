@@ -9,7 +9,8 @@ import oop.prj.DB.DBField;
 import oop.prj.DB.DBTable;
 
 @DBTable(tableName = "normal_user")
-public class NormalUser extends RawUser {
+@Deprecated
+public class NormalUser extends User {
 
     @DBField(name = "posts")
     ArrayList<Integer> postIds = new ArrayList<>();
@@ -17,12 +18,13 @@ public class NormalUser extends RawUser {
     @Expose(serialize = false, deserialize = false)
     transient ArrayList<Post> allPosts = new ArrayList<>();
 
+
     public NormalUser() {
     }
 
     private NormalUser(String userName, String userId, String password, String gmailAddr, String phoneNumber) {
         // super();
-        setUserId(userId);
+        // setUserId(userId);
         setPassword(password);
         setGmailAddr(gmailAddr);
         setPhoneNumber(phoneNumber);
@@ -40,11 +42,18 @@ public class NormalUser extends RawUser {
         }
     }
 
+    // public static void loadAllObjects() {
+    //     if (allNormals.size() == 0) {
+    //         allNormals.addAll(DBManager.getAllObjects(NormalUser.class));
+    //         RawUser.getAllUsers().addAll(allNormals);
+    //     }
+
+    // }
+
     public static void fetchData() {
-        RawUser.fetchData();
         Post.fetchData();
 
-        for (RawUser user : allUsers) {
+        for (User user : allUsers) {
             if (user instanceof NormalUser) {
                 NormalUser nUser = (NormalUser) user;
                 nUser.allPosts = nUser.postIds.stream().map(e -> Post.getWithId(e))
@@ -68,5 +77,10 @@ public class NormalUser extends RawUser {
 
     public ArrayList<Post> getAllPosts() {
         return allPosts;
+    }
+
+    @Override
+    public Class<? extends Sendable> getReceiverClass() {
+        return NormalUser.class;
     }
 }

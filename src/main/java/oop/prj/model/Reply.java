@@ -7,7 +7,7 @@ public class Reply extends Message {
     @DBField(name = "replied_message")
     Message repliedMsg = null;
 
-    public Reply(Message repliedMsg, String context, BusinessUser owner, BusinessUser receiver) {
+    public Reply(Message repliedMsg, String context, User owner, Sendable receiver) {
         super(context, owner, receiver);
         this.repliedMsg = repliedMsg;
     }

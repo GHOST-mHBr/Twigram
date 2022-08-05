@@ -1,9 +1,6 @@
 package oop.prj.model;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import com.google.gson.annotations.Expose;
@@ -13,25 +10,37 @@ import oop.prj.DB.DBAutoIncrement;
 import oop.prj.DB.DBField;
 import oop.prj.DB.DBManager;
 import oop.prj.DB.DBPrimaryKey;
+import oop.prj.DB.DBTable;
 
-public class RawUser implements Sendable {
-    private String type = "RawUser";
+import static com.diogonunes.jcolor.Ansi.colorize;
+import static com.diogonunes.jcolor.Attribute.*;
+
+@DBTable(tableName = "Users")
+public class User implements Sendable {
+    private String type = "User";
     @DBField(name = "Id")
     @DBPrimaryKey
     @DBAutoIncrement
     private Integer id = 0;
 
+    public static enum UserType {
+        BUSINESS, NORMAL
+    }
+
+    @DBField(name = "user_type")
+    private UserType userType = UserType.NORMAL;
+
     @DBField(name = "followers")
     private ArrayList<Integer> followersIds = new ArrayList<>();
 
     @Expose(serialize = false, deserialize = false)
-    private ArrayList<RawUser> followers = new ArrayList<>();
+    private ArrayList<User> followers = new ArrayList<>();
 
     @DBField(name = "followings")
     private ArrayList<Integer> followingsIds = new ArrayList<>();
 
     @Expose(serialize = false, deserialize = false)
-    private ArrayList<RawUser> followings = new ArrayList<>();
+    private ArrayList<User> followings = new ArrayList<>();
 
     @DBField(name = "sent_messages")
     private ArrayList<Integer> sentMessagesIds = new ArrayList<>();
@@ -40,11 +49,7 @@ public class RawUser implements Sendable {
     private ArrayList<Integer> receivedMessagesIds = new ArrayList<>();
 
     @Expose(serialize = false, deserialize = false)
-    transient private ArrayList<Message> sentMessages = new ArrayList<>();
-    @Expose(serialize = false, deserialize = false)
-    transient private ArrayList<Message> receivedMessages = new ArrayList<>();
-    @Expose(serialize = false, deserialize = false)
-    transient static ArrayList<RawUser> allUsers = new ArrayList<>();
+    transient static ArrayList<User> allUsers = new ArrayList<>();
 
     @DBField(name = "banned_users")
     ArrayList<Integer> bannedUsersIds = new ArrayList<>();
@@ -63,7 +68,16 @@ public class RawUser implements Sendable {
 
     @DBField(name = "user_id")
     private String userId = null;
-    
+
+    @DBField(name = "page_watches")
+    private ArrayList<Seen> pageWatches = new ArrayList<>();
+
+    @DBField(name = "posts")
+    private ArrayList<Integer> postIds = new ArrayList<>();
+
+    // @Expose(serialize = false, deserialize = false)
+    // transient private ArrayList<Post> posts = new ArrayList<>();
+
     @Expose(serialize = false, deserialize = false)
     private static boolean fetched = false;
 
@@ -71,60 +85,65 @@ public class RawUser implements Sendable {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        if (userId == null || userId.replaceAll(" +", "").equals("")) {
-            throw new IllegalArgumentException("Bad input for user id\nuser id is null or \"\"");
-        }
-        if (allUsers.size() == 0) {
-            this.userId = userId;
-        }
-        for (RawUser user : allUsers) {
-            if (user != null && user.getUserId() != null && user.getUserId().equals(userId)) {
-                throw new IllegalArgumentException("The id has already taken");
-            }
-        }
-        this.userId = userId;
+    public User() {
     }
 
-    public RawUser() {
-        // allUsers.add(this);
+    public User(String userName, String userId, String password, String gmailAddr, String phoneNumber, UserType type) {
+        setUserId(userId);
+        setUserName(userName);
+        setPassword(password);
+        setGmailAddr(gmailAddr);
+        setPhoneNumber(phoneNumber);
+        userType = type;
+        allUsers.add(this);
     }
 
-    public List<RawUser> getAllBusinessAccounts() {
-        return allUsers.stream().filter(e -> (e instanceof BusinessUser)).collect(Collectors.toList());
+    public void post(String text) {
+        Post post = new Post(text, this);
+        // posts.add(Post);
+        postIds.add(post.getID());
     }
 
-    public static void fetchData() {
-        Message.fetchData();
-        if (!fetched) {
-            try {
-                fetched = true;
-                allUsers.addAll(DBManager.getAllObjects(NormalUser.class));
-                allUsers.addAll(DBManager.getAllObjects(BusinessUser.class));
-                // DBManager.getAllObjects(BusinessUser.class).stream().map(e ->
-                // allUsers.add(e));
+    // public ArrayList<Post> getAllPosts() {
+    // return posts;
+    // }
+    public ArrayList<Integer> getPostsIds() {
+        return postIds;
+    }
 
-                for (RawUser user : allUsers) {
-                    user.followers = user.followersIds.stream().map(e -> getWithId(e))
-                            .collect(Collectors.toCollection(ArrayList::new));
-
-                    user.followings = user.followingsIds.stream().map(e -> getWithId(e))
-                            .collect(Collectors.toCollection(ArrayList::new));
-
-                    user.sentMessages = user.sentMessagesIds.stream().map(e -> Message.getWithId(e))
-                            .collect(Collectors.toCollection(ArrayList::new));
-
-                    user.receivedMessages = user.receivedMessagesIds.stream().map(e -> Message.getWithId(e))
-                            .collect(Collectors.toCollection(ArrayList::new));
-                }
-
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                    | InvocationTargetException
-                    | NoSuchMethodException | SecurityException e) {
-                e.printStackTrace();
-            }
+    public void seenPage(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException();
         }
+        pageWatches.add(new Seen(user));
     }
+
+    public static void loadAllObjects() {
+        if (allUsers.size() == 0)
+            allUsers.addAll(DBManager.getAllObjects(User.class));
+    }
+
+    // public static void fetchData() {
+    // Message.fetchData();
+    // if (!fetched) {
+    // fetched = true;
+    // for (RawUser user : allUsers) {
+    // user.followers = user.followersIds.stream().map(e -> getWithId(e))
+    // .collect(Collectors.toCollection(ArrayList::new));
+
+    // user.followings = user.followingsIds.stream().map(e -> getWithId(e))
+    // .collect(Collectors.toCollection(ArrayList::new));
+
+    // user.sentMessages = user.sentMessagesIds.stream().map(e ->
+    // Message.getWithId(e))
+    // .collect(Collectors.toCollection(ArrayList::new));
+
+    // user.receivedMessages = user.receivedMessagesIds.stream().map(e ->
+    // Message.getWithId(e))
+    // .collect(Collectors.toCollection(ArrayList::new));
+    // }
+    // }
+    // }
 
     protected static void syncWithDB() {
         for (int i = 0; i < allUsers.size(); i++) {
@@ -135,21 +154,23 @@ public class RawUser implements Sendable {
             user.followingsIds = user.followings.stream().map(e -> e.getID())
                     .collect(Collectors.toCollection(ArrayList::new));
 
-            user.sentMessagesIds = user.sentMessages.stream().map(e -> e.getId())
-                    .collect(Collectors.toCollection(ArrayList::new));
+            // user.sentMessagesIds = user.sentMessages.stream().map(e -> e.getId())
+            // .collect(Collectors.toCollection(ArrayList::new));
 
-            user.receivedMessagesIds = user.receivedMessages.stream().map(e -> e.getId())
-                    .collect(Collectors.toCollection(ArrayList::new));
+            // user.receivedMessagesIds = user.receivedMessages.stream().map(e -> e.getId())
+            // .collect(Collectors.toCollection(ArrayList::new));
 
-            if (user instanceof BusinessUser) {
-                var bUser = (BusinessUser) user;
-                bUser.postsIds = bUser.posts.stream().map(e -> e.getId())
-                        .collect(Collectors.toCollection(ArrayList::new));
-            } else {
-                var nUser = (NormalUser) user;
-                nUser.postIds = nUser.allPosts.stream().map(e -> e.getId())
-                        .collect(Collectors.toCollection(ArrayList::new));
-            }
+            // user.postIds = user.posts.stream().map(e ->
+            // e.getId()).collect(Collectors.toCollection(ArrayList::new));
+            // if (user instanceof BusinessUser) {
+            // var bUser = (BusinessUser) user;
+            // bUser.postsIds = bUser.posts.stream().map(e -> e.getId())
+            // .collect(Collectors.toCollection(ArrayList::new));
+            // } else {
+            // var nUser = (NormalUser) user;
+            // nUser.postIds = nUser.allPosts.stream().map(e -> e.getId())
+            // .collect(Collectors.toCollection(ArrayList::new));
+            // }
         }
 
     }
@@ -170,6 +191,15 @@ public class RawUser implements Sendable {
         }
     }
 
+    public static User getUser(String userId) {
+        for (var user : allUsers) {
+            if (user.getUserId().equals(userId)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
     public String getUserName() {
         return username;
     }
@@ -187,27 +217,37 @@ public class RawUser implements Sendable {
     }
 
     public ArrayList<Message> getAllSentMessages() {
-        return sentMessages;
+        return sentMessagesIds.stream().map(e -> Message.getWithId(e)).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public ArrayList<Message> getAllReceivedMessages() {
-        return receivedMessages;
+        return receivedMessagesIds.stream().map(e -> Message.getWithId(e))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    public ArrayList<RawUser> getAllFollowers() {
+    public ArrayList<User> getAllFollowers() {
         return followers;
     }
 
-    public ArrayList<RawUser> getAllFollowings() {
+    public ArrayList<User> getAllFollowings() {
         return followings;
+    }
+
+    public void setUserId(String userId) {
+        allUsers.forEach(e -> {
+            if (e.getUserId().equals(userId)) {
+                throw new IllegalArgumentException("The id has already taken!");
+            }
+        });
+        this.userId = userId;
     }
 
     public void setUserName(String userName) {
         this.username = userName;
     }
 
-    public static RawUser getWithId(Integer id) {
-        for (RawUser user : allUsers) {
+    public static User getWithId(Integer id) {
+        for (User user : allUsers) {
             if (user.getID().equals(id)) {
                 return user;
             }
@@ -242,7 +282,7 @@ public class RawUser implements Sendable {
         }
 
         Message msg = new Message(text, this, receiver);
-        sentMessages.add(msg);
+        sentMessagesIds.add(msg.getId());
         receiver.messageReceived(msg);
     }
 
@@ -253,7 +293,8 @@ public class RawUser implements Sendable {
     public ArrayList<Message> getSentMsgsTo(Sendable receiver) {
 
         ArrayList<Message> result = new ArrayList<>();
-        for (Message msg : sentMessages) {
+        for (Integer msgId : sentMessagesIds) {
+            var msg = Message.getWithId(msgId);
             if (msg.getReceiver().equals(receiver) && msg.getOwner().equals(this)) {
                 result.add(msg);
             }
@@ -261,9 +302,10 @@ public class RawUser implements Sendable {
         return result;
     }
 
-    public ArrayList<Message> getReceivedMsgsFrom(RawUser sender) {
+    public ArrayList<Message> getReceivedMsgsFrom(User sender) {
         ArrayList<Message> result = new ArrayList<>();
-        for (Message msg : receivedMessages) {
+        for (Integer msgId : receivedMessagesIds) {
+            var msg= Message.getWithId(msgId);
             if (msg.getReceiver().equals(this) && msg.getOwner().equals(sender)) {
                 result.add(msg);
             }
@@ -271,44 +313,39 @@ public class RawUser implements Sendable {
         return result;
     }
 
-    public void follow(RawUser other) {
+    public void follow(User other) {
         if (!followings.contains(other)) {
             followings.add(other);
             other.getAllFollowers().add(this);
         }
     }
 
-    public void unFollow(RawUser other) {
+    public void unFollow(User other) {
         if (followings.contains(other)) {
             followings.remove(other);
             other.getAllFollowers().remove(this);
         }
     }
 
-    public static RawUser getUser(String userId) {
-        for (RawUser user : allUsers) {
-            if (user.getUserId().equals(userId)) {
-                return user;
-            }
-        }
-        throw new NoSuchElementException("No such a user exist");
+    public static ArrayList<User> getAllUsers() {
+        return allUsers;
     }
 
     @Override
     public void messageReceived(Message msg) {
-        receivedMessages.add(msg);
+        receivedMessagesIds.add(msg.getId());
     }
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof RawUser)) {
+        if (!(other instanceof User)) {
             return false;
         }
         if (other.equals(null)) {
             return false;
         }
 
-        RawUser otherUser = (RawUser) other;
+        User otherUser = (User) other;
         if (otherUser.getID() == this.getID()) {
             return true;
         }
@@ -325,7 +362,7 @@ public class RawUser implements Sendable {
             res += "\nfollowers:\n";
         else
             res += "\nNo follower:(\n";
-        for (RawUser user : followers) {
+        for (User user : followers) {
             res += user.getUserName() + "\n";
         }
         if (followings.size() > 0)
@@ -333,7 +370,7 @@ public class RawUser implements Sendable {
         else
             res += "\nNo following:(\n";
 
-        for (RawUser user : followings) {
+        for (User user : followings) {
             res += user.getUserName() + "\n";
         }
         return res;
@@ -353,7 +390,7 @@ public class RawUser implements Sendable {
             res += "\nfollowers:\n";
         else
             res += "\nNo follower:(\n";
-        for (RawUser user : followers) {
+        for (User user : followers) {
             res += user.getUserName() + "\n";
         }
         if (followings.size() > 0)
@@ -361,19 +398,32 @@ public class RawUser implements Sendable {
         else
             res += "\nNo following:(\n";
 
-        for (RawUser user : followings) {
+        for (User user : followings) {
             res += user.getUserName() + "\n";
         }
         return res;
     }
 
-    public void printMessages() {
-        if (receivedMessages.size() > 0) {
-            for (var m : receivedMessages) {
-                App.prLn(m.toString());
+    public void printAndSeeMessages() {
+        if (receivedMessagesIds.size() > 0) {
+            for (var m : getAllReceivedMessages()) {
+                if(!m.hasSeen(this)){
+                    App.prLn(colorize(m.toString() , BOLD() , BLUE_TEXT()) );
+                    m.seen(this);
+                }else{
+                    App.prLn(m.toString());
+                }
             }
         } else {
             App.prLn("You don't have any message!");
+        }
+    }
+
+    public void printPosts() {
+        for (Post post : postIds.stream().map(e -> Post.getWithId(e)).collect(Collectors.toList())) {
+            if (userType.equals(UserType.BUSINESS))
+                App.prLn(colorize("Advertisement", WHITE_TEXT(), RED_BACK(), ITALIC()));
+            App.prLn(post.toString());
         }
     }
 
@@ -384,7 +434,7 @@ public class RawUser implements Sendable {
 
     @Override
     public Class<? extends Sendable> getReceiverClass() {
-        return RawUser.class;
+        return User.class;
     }
 
 }

@@ -8,7 +8,7 @@ public class Comment extends Post {
         super(null, null);
     }
 
-    public Comment(String context, RawUser owner, Post post) {
+    public Comment(String context, User owner, Post post) {
         super(context, owner);
         commentedPost = post;
     }

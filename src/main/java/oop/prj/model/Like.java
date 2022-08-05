@@ -5,14 +5,14 @@ import java.time.LocalDateTime;
 
 public class Like {
     LocalDateTime dateTime =null;
-    RawUser liker = null;
+    User liker = null;
 
-    public Like(RawUser user){
+    public Like(User user){
         liker = user;
         dateTime = LocalDateTime.now();
     }
 
-    public RawUser getLiker(){
+    public User getLiker(){
         return liker;
     }
 
