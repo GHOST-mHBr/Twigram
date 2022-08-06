@@ -4,12 +4,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import oop.prj.DB.DBField;
 import oop.prj.DB.DBManager;
 import oop.prj.DB.DBTable;
 
-import static com.diogonunes.jcolor.Ansi.colorize;
+import static com.diogonunes.jcolor.Ansi.*;
 import static com.diogonunes.jcolor.Attribute.*;
 
 @DBTable(tableName = "posts")
@@ -22,7 +23,7 @@ public class Post extends RawMessage implements Comparable<Post> {
     protected TreeSet<Seen> watches = new TreeSet<>();
 
     @DBField(name = "comments")
-    protected ArrayList<Comment> comments = new ArrayList<>();
+    protected ArrayList<Integer> commentsIds = new ArrayList<>();
 
     private static ArrayList<Post> allPosts = new ArrayList<>();
 
@@ -38,9 +39,6 @@ public class Post extends RawMessage implements Comparable<Post> {
     }
 
     public static Post makePost(String context, User owner) {
-        if (context.equals("") || owner.equals(null)) {
-            throw new IllegalArgumentException();
-        }
         Post instance = new Post(context, owner);
         return instance;
     }
@@ -50,7 +48,7 @@ public class Post extends RawMessage implements Comparable<Post> {
     }
 
     public void comment(String text, User user) {
-        comments.add(new Comment(text, user, this));
+        commentsIds.add(new Comment(text, user, this).getId());
     }
 
     public void addSeen(User user) {
@@ -84,6 +82,10 @@ public class Post extends RawMessage implements Comparable<Post> {
         }
     }
 
+    public ArrayList<Comment> getAllComments() {
+        return commentsIds.stream().map(e -> Comment.getWithId(e)).collect(Collectors.toCollection(ArrayList::new));
+    }
+
     @Override
     public int compareTo(Post o) {
         return dateTime.compareTo(o.getDateTime());
@@ -91,15 +93,23 @@ public class Post extends RawMessage implements Comparable<Post> {
 
     @Override
     public String toString() {
-        var formatter = DateTimeFormatter.ofPattern("yyyy LLL dd\nhh:mm a");
+        var formatter = DateTimeFormatter.ofPattern("hh:mm a\nyyyy LLL dd");
         String res = "";
-        // res += "from: " + getOwner().getUserName();
-        res += dateTime.format(formatter);
-        res += "\n";
-        res += colorize("Post Id: " + id + " ", GREEN_BACK(), ITALIC(), BOLD(), UNDERLINE());
-        res += "\n----------\n";
+        res += "----------\n";
         res += context;
-        res += "\n----------";
+        res += "\n----------\n";
+        res += colorize(dateTime.format(formatter), MAGENTA_TEXT());
+        res += "\n";
+        res += (colorize("|likes:" + likes.size(), RED_TEXT(), BOLD()));
+        res += (colorize("    |watches:" + watches.size(), GREEN_TEXT(), BOLD()));
+        res += (colorize("    |id:" + id, YELLOW_TEXT(), BOLD()));
+        if (commentsIds.size() > 0) {
+            res += colorize("\n\n" + colorize("  Comments:", TEXT_COLOR(150, 150, 150), ITALIC()) + "\n");
+            for (var c : getAllComments()) {
+                if (c != null)
+                    res += c.toString();
+            }
+        }
 
         return res;
     }

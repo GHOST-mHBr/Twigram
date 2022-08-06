@@ -23,11 +23,6 @@ public abstract class RawMessage {
     @DBField(name = "owner_id")
     Integer ownerId = null;
 
-    // @Expose(serialize = false, deserialize = false)
-    // User owner = null;
-
-    // transient static ArrayList<RawMessage> allMessages = new ArrayList<>();
-
     protected RawMessage() {
     }
 
@@ -35,7 +30,7 @@ public abstract class RawMessage {
         if (owner == null || context == null || context.replaceAll(" ", "").equals("")) {
             throw new IllegalArgumentException("Bad input for post information!\nPlease try again");
         }
-        id = DBManager.getLastId(Message.class) + 1;
+        // id = DBManager.getLastId(Message.class) + 1;
         ownerId = owner.getID();
         this.context = context;
         dateTime = LocalDateTime.now();
@@ -59,5 +54,9 @@ public abstract class RawMessage {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public void setContext(String newC){
+        context = newC;
     }
 }

@@ -22,6 +22,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.protobuf.Message;
 
+
+
 import oop.prj.model.Sendable;
 
 public class DBManager {

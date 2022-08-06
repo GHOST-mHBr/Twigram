@@ -267,12 +267,12 @@ public class User implements Sendable {
         return result;
     }
 
-    public ArrayList<Message> getReceivedMsgsFrom(User sender) {
-        ArrayList<Message> result = new ArrayList<>();
+    public ArrayList<Integer> getReceivedMsgsFrom(User sender) {
+        ArrayList<Integer> result = new ArrayList<>();
         for (Integer msgId : receivedMessagesIds) {
             var msg = Message.getWithId(msgId);
-            if (msg.getReceiver().equals(this) && msg.getOwner().equals(sender)) {
-                result.add(msg);
+            if (msg.getOwner().equals(sender)) {
+                result.add(msg.getId());
             }
         }
         return result;
@@ -368,6 +368,9 @@ public class User implements Sendable {
     }
 
     public void printAndSeeMessages() {
+        for (var i : bannedUsersIds) {
+            receivedMessagesIds.removeAll(getReceivedMsgsFrom(User.getWithId(i)));
+        }
         if (receivedMessagesIds.size() > 0) {
             for (var m : getAllReceivedMessages()) {
                 if (!m.hasSeen(this)) {
@@ -385,11 +388,15 @@ public class User implements Sendable {
     public void printPosts(User watcher) {
         for (Post post : postIds.stream().map(e -> Post.getWithId(e)).collect(Collectors.toList())) {
             post.addSeen(watcher);
+            post.getAllComments().forEach(e -> {
+                if (e != null)
+                    e.addSeen(watcher);
+            });
+            App.pr("\n");
             if (userType.equals(UserType.BUSINESS))
-                App.prLn("\n" + colorize("Advertisement", WHITE_TEXT(), RED_BACK(), ITALIC()));
+                App.prLn(colorize("Advertisement", WHITE_TEXT(), RED_BACK(), ITALIC()));
             App.prLn(post.toString());
-            App.prLn(colorize(post.getAllLikes().size() + " likes", RED_TEXT(), BOLD()));
-            App.prLn(colorize(post.getAllWatches().size() + " watches", GREEN_TEXT(), BOLD()));
+            App.pr("\n");
         }
     }
 
@@ -401,6 +408,10 @@ public class User implements Sendable {
     @Override
     public Class<? extends Sendable> getReceiverClass() {
         return User.class;
+    }
+
+    public void ban(User user) {
+        bannedUsersIds.add(user.getID());
     }
 
 }

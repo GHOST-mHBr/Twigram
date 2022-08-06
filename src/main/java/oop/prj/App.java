@@ -4,9 +4,9 @@ import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-
 import oop.prj.DB.DBManager;
 import oop.prj.model.Comment;
+import oop.prj.model.Group;
 import oop.prj.model.Message;
 import oop.prj.model.Post;
 import oop.prj.model.User;
@@ -42,16 +42,18 @@ public class App {
     public static void main(String[] args) {
 
         // DBManager.createTableIfNotExist(NormalUser.class);
-        DBManager.createTableIfNotExist(Message.class);
-        DBManager.createTableIfNotExist(Comment.class);
+        DBManager.createTableIfNotExist(Group.class);
+        // DBManager.createTableIfNotExist(Comment.class);
         // DBManager.createTableIfNotExist(User.class);
         // DBManager.createTableIfNotExist(Post.class);
         // DBManager.createTableIfNotExist(BusinessUser.class);
         // DBManager.createTableIfNotExist(AdPost.class);
 
         User.loadAllObjects();
-        Message.loadAllObjects();
         Post.loadAllObjects();
+        Comment.loadAllObjects();
+        Group.loadAllObjects();
+        Message.loadAllObjects();
 
         // User.fetchData();
 
@@ -61,6 +63,8 @@ public class App {
                 Post.saveData();
                 Message.saveData();
                 User.saveData();
+                Comment.saveData();
+                Group.saveData();
                 break;
             }
             line = line.replaceAll("  +", " ");
@@ -110,10 +114,19 @@ public class App {
                     }
 
                     case "send_message": {
-                        String messageText = getInput("Enter your message");
-                        String receiverId = getInput("Input receiver id");
-                        loggedInUser.sendMessage(messageText, User.getUser(receiverId));
-                        prLn("\nmessage sent successfully");
+                        String dest = getInput("Enter g for groups and p for private message");
+                        if (dest.toLowerCase().equals("p") || dest.toLowerCase().equals("g")) {
+                            String messageText = getInput("Enter your message");
+                            String receiverId = getInput("Input receiver id");
+                            if (dest.toLowerCase().equals("p")) {
+                                loggedInUser.sendMessage(messageText, User.getUser(receiverId));
+                            } else {
+                                loggedInUser.sendMessage(messageText, Group.getWithId(receiverId));
+                            }
+                            prLn("\nThe message sent successfully");
+                        } else {
+                            throw new IllegalArgumentException("Bad input");
+                        }
                         break;
                     }
                     case "read_messages": {
@@ -161,10 +174,6 @@ public class App {
 
                         break;
                     }
-                    case "create_group": {
-
-                        break;
-                    }
 
                     case "post": {
                         if (loggedInUser == null) {
@@ -173,26 +182,122 @@ public class App {
                         loggedInUser.post(getInput("Enter your post text"));
                         break;
                     }
-                    case "like":{
-                        if(loggedInUser == null){
+                    case "like": {
+                        if (loggedInUser == null) {
                             throw new IllegalArgumentException("Please login first");
                         }
-                        if(lineParts.length < 3 || lineParts[1].equals("") || lineParts[2].equals("")){
-                            throw new IllegalArgumentException("bas usage\nuse the following syntax:\nlike [post,comment] [id]\n");
+                        if (lineParts.length < 3 || lineParts[1].equals("") || lineParts[2].equals("")) {
+                            throw new IllegalArgumentException(
+                                    "bas usage\nuse the following syntax:\nlike [post|comment] [id]\n");
                         }
-                        switch(lineParts[1].toLowerCase()){
+                        switch (lineParts[1].toLowerCase()) {
                             case "post":
-                            Post.getWithId(lineParts[2]).like(loggedInUser);
-                            break;
+                                Post.getWithId(lineParts[2]).like(loggedInUser);
+                                break;
 
                             case "comment":
-                            Comment.getWithId(lineParts[2]).like(loggedInUser);
-                            break;
+                                Comment.getWithId(lineParts[2]).like(loggedInUser);
+                                break;
                         }
                         prLn("done.");
+                        break;
 
                     }
                     case "comment": {
+                        if (loggedInUser == null) {
+                            throw new IllegalArgumentException("Please login first");
+                        }
+                        if (lineParts.length != 4 || !(lineParts[1].equals("comment") || lineParts[1].equals("post"))) {
+                            throw new IllegalArgumentException(
+                                    "Bad usage!\nuse the following syntax:\ncomment [comment|post] [commentId|postId] [your comment]");
+                        }
+                        Post post = null;
+                        if (lineParts[1].toLowerCase().equals("comment")) {
+                            post = Comment.getWithId(lineParts[2]);
+                        } else {
+                            post = Post.getWithId(lineParts[2]);
+                        }
+                        post.comment(lineParts[3], loggedInUser);
+                        prLn("Successful");
+                        break;
+                    }
+                    case "group": {
+                        if (lineParts.length < 4) {
+                            throw new IllegalArgumentException(
+                                    "Bad usage\nuse the following syntax:\ngroup [add|remove|ban] [group id] [user id]\nor"
+                                            +
+                                            "\ngroup [change_name|change_id] [group id] [new name|new id]\nor" +
+                                            "\ngroup create [group id] [group name]\nor" +
+                                            "group show [group id] [info|chat]\n");
+                        }
+
+                        switch (lineParts[1]) {
+                            case "create": {
+                                new Group(lineParts[3], lineParts[2], loggedInUser);
+                                prLn("done");
+                                break;
+                            }
+                            case "add": {
+                                Group.getGroup(lineParts[2]).addUser(User.getUser(lineParts[3]), loggedInUser);
+                                prLn("done");
+                                break;
+                            }
+                            case "remove": {
+                                Group.getGroup(lineParts[2]).removeUser(User.getUser(lineParts[3]));
+                                prLn("done");
+                                break;
+                            }
+                            case "ban": {
+                                Group.getGroup(lineParts[2]).ban(User.getUser(lineParts[3]), loggedInUser);
+                                prLn("done");
+                                break;
+                            }
+                            case "change_id": {
+                                Group.getGroup(lineParts[2]).setGroupId(lineParts[3]);
+                                prLn("done");
+                                break;
+                            }
+                            case "change_name": {
+                                Group.getGroup(lineParts[2]).setGroupName(lineParts[3]);
+                                prLn("done");
+                                break;
+                            }
+                            case "show":
+                                switch (lineParts[2]) {
+                                    case "info": {
+                                        Group.getGroup(lineParts[3]).printInfo();
+                                        break;
+                                    }
+                                    case "chat": {
+                                        Group.getGroup(lineParts[3]).printChat();
+                                        break;
+                                    }
+                                    default: {
+                                        throw new IllegalArgumentException("Bad syntax!");
+                                    }
+                                }
+                                break;
+                            default: {
+                                throw new IllegalArgumentException("Bad command");
+                            }
+                        }
+                    }
+                    case "edit_message": {
+                        if (lineParts.length != 3) {
+                            throw new IllegalArgumentException(
+                                    "bad input\nuse the following syntax:\nedit_message [message id] [new context]");
+                        }
+                        Message.getWithId(lineParts[1]).setContext(lineParts[2]);
+                        break;
+                    }
+                    case "ban_user": {
+                        if(loggedInUser==null){
+                            throw new IllegalAccessException("Please login first");
+                        }
+                        String id = getInput("Who do you want to ban?");
+                        loggedInUser.ban(User.getUser(id));
+                    }
+                    case "remove_message": {
 
                         break;
                     }

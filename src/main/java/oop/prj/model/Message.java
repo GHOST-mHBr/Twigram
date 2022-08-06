@@ -2,13 +2,15 @@ package oop.prj.model;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
 
 import oop.prj.DB.DBField;
 import oop.prj.DB.DBManager;
 import oop.prj.DB.DBTable;
+
+import static com.diogonunes.jcolor.Ansi.*;
+import static com.diogonunes.jcolor.Attribute.*;
 
 @DBTable(tableName = "messages")
 public class Message extends RawMessage {
@@ -21,7 +23,6 @@ public class Message extends RawMessage {
 
     transient private static ArrayList<Message> allMessages = new ArrayList<>();
 
-
     private static boolean fetched = false;
 
     public Message() {
@@ -32,17 +33,20 @@ public class Message extends RawMessage {
         if (receiver == null) {
             throw new IllegalArgumentException("The receiver is null");
         }
+        id = DBManager.getLastId(Message.class) + 1;
         this.receiver = receiver;
         allMessages.add(this);
     }
 
-    public TreeSet<Integer> getAllWatchersIds(){return watchersIds;}
+    public TreeSet<Integer> getAllWatchersIds() {
+        return watchersIds;
+    }
 
-    public boolean hasSeen(User user){
+    public boolean hasSeen(User user) {
         return watchersIds.contains(user.getID());
     }
 
-    public void seen(User user){
+    public void seen(User user) {
         watchersIds.add(user.getID());
     }
 
@@ -59,23 +63,25 @@ public class Message extends RawMessage {
         throw new NoSuchElementException("No such a message exists");
     }
 
+    public static Message getWithId(String id) {
+        try {
+            Integer id_ = Integer.parseInt(id);
+            return getWithId(id_);
+        } catch (NumberFormatException e) {
+            throw new NoSuchElementException("No such a message exists");
+        }
+    }
+
     @Override
     public String toString() {
-        var formatter = DateTimeFormatter.ofPattern("yyyy LLL dd\nhh:mm a");
-        String res = "\n--------\n";
-        res += dateTime.format(formatter);
-        res += "\nfrom ";
-        res += getOwner().getUserName();
-        res += " to ";
-        if (receiver.getReceiverClass().getSimpleName().equals("Group")) {
-            Group grR = (Group) receiver;
-            res += "group: " + grR.getGroupId();
-        } else {
-            res += "You";
-        }
-        res += "\n--------\n";
+        var formatter = DateTimeFormatter.ofPattern("hh:mm a\nyyyy LLL dd");
+        String res = "";
+        res += colorize(getOwner().getUserName()+":", BLUE_TEXT()) + "\n";
         res += context;
-        res += "\n--------\n";
+        res += "\n";
+        res += "\n" + colorize(dateTime.format(formatter), MAGENTA_TEXT());
+        res += "\n" + colorize("id:" + id, YELLOW_TEXT());
+        res += "\n";
 
         return res;
     }
@@ -83,7 +89,7 @@ public class Message extends RawMessage {
     public static void fetchData() {
         if (!fetched) {
             allMessages = DBManager.getAllObjects(Message.class);
-            
+
             fetched = true;
         }
     }
