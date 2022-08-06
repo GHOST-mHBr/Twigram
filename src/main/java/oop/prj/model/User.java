@@ -1,6 +1,7 @@
 package oop.prj.model;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import com.google.gson.annotations.Expose;
@@ -153,7 +154,7 @@ public class User implements Sendable {
                 return user;
             }
         }
-        return null;
+        throw new NoSuchElementException("No such a user exists");
     }
 
     public String getUserName() {
@@ -238,7 +239,7 @@ public class User implements Sendable {
         return id;
     }
 
-    public void sendMessage(String text, Sendable receiver) {
+    public void sendMessage(String text, Sendable receiver) throws IllegalAccessException {
         if (text == null || text.replaceAll(" ", "").equals("")) {
             throw new IllegalArgumentException("the message is empty!");
         }
@@ -368,11 +369,14 @@ public class User implements Sendable {
     }
 
     public void printAndSeeMessages() {
-        for (var i : bannedUsersIds) {
-            receivedMessagesIds.removeAll(getReceivedMsgsFrom(User.getWithId(i)));
-        }
-        if (receivedMessagesIds.size() > 0) {
-            for (var m : getAllReceivedMessages()) {
+        ArrayList<Message> allMessages = new ArrayList<>();
+        allMessages.addAll(getAllReceivedMessages());
+        allMessages.addAll(getAllSentMessages());
+
+        if (allMessages.size() > 0) {
+            for (var m : allMessages) {
+                if (bannedUsersIds.contains(m.getOwnerId()))
+                    continue;
                 if (!m.hasSeen(this)) {
                     App.prLn(colorize(m.toString(), BOLD(), BLUE_TEXT()));
                     m.seen(this);
@@ -411,7 +415,14 @@ public class User implements Sendable {
     }
 
     public void ban(User user) {
-        bannedUsersIds.add(user.getID());
+        if (!bannedUsersIds.contains(user.getID()))
+            bannedUsersIds.add(user.getID());
+    }
+
+    public void ban(Integer id) {
+        if (!bannedUsersIds.contains(id)) {
+            bannedUsersIds.add(id);
+        }
     }
 
 }

@@ -121,7 +121,7 @@ public class App {
                             if (dest.toLowerCase().equals("p")) {
                                 loggedInUser.sendMessage(messageText, User.getUser(receiverId));
                             } else {
-                                loggedInUser.sendMessage(messageText, Group.getWithId(receiverId));
+                                loggedInUser.sendMessage(messageText, Group.getGroup(receiverId));
                             }
                             prLn("\nThe message sent successfully");
                         } else {
@@ -130,9 +130,10 @@ public class App {
                         break;
                     }
                     case "read_messages": {
-                        if (loggedInUser != null) {
-                            loggedInUser.printAndSeeMessages();
+                        if (loggedInUser == null) {
+                            throw new NullPointerException("Please login first");
                         }
+                        loggedInUser.printAndSeeMessages();
                         break;
                     }
 
@@ -243,22 +244,26 @@ public class App {
                                 break;
                             }
                             case "remove": {
-                                Group.getGroup(lineParts[2]).removeUser(User.getUser(lineParts[3]));
+                                Group.getGroup(lineParts[2]).removeUser(User.getUser(lineParts[3]),loggedInUser);
                                 prLn("done");
                                 break;
                             }
                             case "ban": {
-                                Group.getGroup(lineParts[2]).ban(User.getUser(lineParts[3]), loggedInUser);
+                                Group.getGroup(lineParts[2]).ban(lineParts[3], loggedInUser);
                                 prLn("done");
                                 break;
                             }
+                            case "unban":{
+                                Group.getGroup(lineParts[2]).unban(lineParts[3] , loggedInUser);
+                            }
                             case "change_id": {
-                                Group.getGroup(lineParts[2]).setGroupId(lineParts[3]);
+                                
+                                Group.getGroup(lineParts[2]).setGroupId(lineParts[3],loggedInUser);
                                 prLn("done");
                                 break;
                             }
                             case "change_name": {
-                                Group.getGroup(lineParts[2]).setGroupName(lineParts[3]);
+                                Group.getGroup(lineParts[2]).setGroupName(lineParts[3],loggedInUser);
                                 prLn("done");
                                 break;
                             }
@@ -281,6 +286,7 @@ public class App {
                                 throw new IllegalArgumentException("Bad command");
                             }
                         }
+                        break;
                     }
                     case "edit_message": {
                         if (lineParts.length != 3) {
@@ -300,6 +306,9 @@ public class App {
                     case "remove_message": {
 
                         break;
+                    }
+                    default:{
+                        prLn("Bad command");
                     }
                 }
             } catch (Exception e) {

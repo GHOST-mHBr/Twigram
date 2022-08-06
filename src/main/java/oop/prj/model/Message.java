@@ -116,4 +116,8 @@ public class Message extends RawMessage {
         }
     }
 
+    public Integer getOwnerId() {
+        return ownerId;
+    }
+
 }

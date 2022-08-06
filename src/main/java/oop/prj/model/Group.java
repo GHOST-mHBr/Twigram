@@ -46,10 +46,10 @@ public class Group implements Sendable {
     public Group() {
     }
 
-    public Group(String name, String groupId, User admin) throws IllegalArgumentException {
-        setGroupId(groupId);
-        setGroupName(name);
+    public Group(String name, String groupId, User admin) throws IllegalArgumentException, IllegalAccessException {
         setAdmin(admin);
+        setGroupId(groupId, admin);
+        setGroupName(name, admin);
         id = DBManager.getLastId(Group.class) + 1;
         usersIds.add(admin.getID());
         allGroups.add(this);
@@ -65,6 +65,9 @@ public class Group implements Sendable {
         }
         if (!adder.equals(admin)) {
             throw new IllegalAccessException("You are not admin");
+        }
+        if (bannedIds.contains(user.getID())) {
+            throw new IllegalAccessException(user.getID() + " is banned");
         }
         usersIds.add(user.getID());
     }
@@ -82,19 +85,56 @@ public class Group implements Sendable {
         }
     }
 
-    public void removeUser(User user) {
+    public void removeUser(User user, User remover) throws IllegalAccessException {
+        if (remover == null) {
+            throw new NullPointerException("Please login first");
+        }
+        if (!remover.equals(admin)) {
+            throw new IllegalAccessException("You are not admin");
+        }
         if (usersIds.contains(user.getID())) {
             usersIds.remove(user.getID());
         }
     }
 
-    public void ban(User user, User banner) {
+    public void ban(User user, User banner) throws IllegalAccessException {
+        if (banner == null) {
+            App.prLn("Please login first");
+        }
         if (banner.equals(admin)) {
-            bannedIds.add(user.getID());
+            if (!bannedIds.contains(user.getID()))
+                bannedIds.add(user.getID());
+        } else {
+            throw new IllegalAccessException("You are not admin!");
         }
     }
 
-    public void setGroupId(String groupId) throws IllegalArgumentException {
+    public void ban(String idStr, User banner) throws IllegalAccessException {
+        try {
+            Integer id = User.getUser(idStr).getID();
+            if (banner == null) {
+                App.prLn("Please login first");
+                return;
+            }
+            if (banner.equals(admin)) {
+                if (!bannedIds.contains(id))
+                    bannedIds.add(id);
+            } else {
+                throw new IllegalAccessException("You are not admin!");
+            }
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Bad input for id");
+        }
+
+    }
+
+    public void setGroupId(String groupId, User changer) throws IllegalArgumentException, IllegalAccessException {
+        if (changer == null) {
+            throw new IllegalArgumentException("Please login first");
+        }
+        if (!changer.equals(admin)) {
+            throw new IllegalAccessException("You are not admin");
+        }
         if (groupId == null) {
             throw new IllegalArgumentException("Bad group id");
         }
@@ -106,7 +146,13 @@ public class Group implements Sendable {
         this.groupId = groupId;
     }
 
-    public void setGroupName(String name) throws IllegalArgumentException {
+    public void setGroupName(String name, User changer) throws IllegalArgumentException, IllegalAccessException {
+        if (changer == null) {
+            throw new IllegalArgumentException("Please login first");
+        }
+        if (!changer.equals(admin)) {
+            throw new IllegalAccessException("You are not admin");
+        }
         if (name == null || name.replaceAll(" +", "").equals("")) {
             throw new IllegalArgumentException("The name is empty");
         }
@@ -131,21 +177,34 @@ public class Group implements Sendable {
         for (var m : usersIds.stream().map(e -> User.getWithId(e)).collect(Collectors.toList())) {
             res += "  " + colorize("" + i++ + ". ", RED_TEXT()) + m.getUserName() + "\n";
         }
-        res += colorize("     end of members     ", WHITE_TEXT(), MAGENTA_BACK());
+        res += colorize("     end of members     ", WHITE_TEXT(), GREEN_BACK());
+        i = 1;
+        if (bannedIds.size() > 0) {
+            res += "\n Banned users:\n";
+            for (var m : bannedIds.stream().map(e -> User.getWithId(e)).collect(Collectors.toList())) {
+                res += "  " + colorize("" + i++ + ". ", RED_TEXT()) + m.getUserName() + "\n";
+            }
+            res += colorize("  end of banned users   ", WHITE_TEXT(), RED_BACK());
+        }
         App.prLn(res);
     }
 
     public void printChat() {
-        for (int i = messages.size() - 1; i > 0; i--) {
+        for (int i = 0; i < messages.size() - 1; i++) {
             var msg = Message.getWithId(messages.get(i));
             App.prLn(msg.toString());
             App.prLn(colorize("              ", GREEN_BACK()));
         }
-        App.prLn(Message.getWithId(messages.get(0)).toString());
+        App.prLn(Message.getWithId(messages.get(messages.size() - 1)).toString());
     }
 
     @Override
-    public void messageReceived(Message msg) {
+    public void messageReceived(Message msg) throws IllegalAccessException {
+        if (!usersIds.contains(msg.getOwnerId())) {
+            throw new IllegalAccessException("You are not a member of this group");
+        }
+        if (bannedIds.contains(msg.getOwnerId()))
+            throw new IllegalAccessException("You are banned!");
         messages.add(msg.getId());
     }
 
@@ -203,5 +262,26 @@ public class Group implements Sendable {
 
     public static void loadAllObjects() {
         allGroups = DBManager.getAllObjects(Group.class);
+    }
+
+    public void unban(String idStr, User banner) throws IllegalAccessException {
+
+        try {
+            Integer id = User.getUser(idStr).getID();
+            if (banner == null) {
+                App.prLn("Please login first");
+                return;
+            }
+            if (banner.equals(admin)) {
+                if (bannedIds.contains(id))
+                    bannedIds.remove(id);
+                else
+                    throw new IllegalAccessException(idStr + " is not banned");
+            } else {
+                throw new IllegalAccessException("You are not admin!");
+            }
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Bad input for id");
+        }
     }
 }
