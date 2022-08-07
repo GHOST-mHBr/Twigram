@@ -42,12 +42,13 @@ public class App {
     public static void main(String[] args) {
 
         // DBManager.createTableIfNotExist(NormalUser.class);
-        DBManager.createTableIfNotExist(Group.class);
+        // DBManager.createTableIfNotExist(Group.class);
         // DBManager.createTableIfNotExist(Comment.class);
         // DBManager.createTableIfNotExist(User.class);
         // DBManager.createTableIfNotExist(Post.class);
         // DBManager.createTableIfNotExist(BusinessUser.class);
         // DBManager.createTableIfNotExist(AdPost.class);
+        DBManager.createTableIfNotExist(Message.class);
 
         User.loadAllObjects();
         Post.loadAllObjects();
@@ -114,6 +115,9 @@ public class App {
                     }
 
                     case "send_message": {
+                        if (loggedInUser == null) {
+                            throw new NullPointerException("Please login first");
+                        }
                         String dest = getInput("Enter g for groups and p for private message");
                         if (dest.toLowerCase().equals("p") || dest.toLowerCase().equals("g")) {
                             String messageText = getInput("Enter your message");
@@ -244,7 +248,7 @@ public class App {
                                 break;
                             }
                             case "remove": {
-                                Group.getGroup(lineParts[2]).removeUser(User.getUser(lineParts[3]),loggedInUser);
+                                Group.getGroup(lineParts[2]).removeUser(User.getUser(lineParts[3]), loggedInUser);
                                 prLn("done");
                                 break;
                             }
@@ -253,17 +257,17 @@ public class App {
                                 prLn("done");
                                 break;
                             }
-                            case "unban":{
-                                Group.getGroup(lineParts[2]).unban(lineParts[3] , loggedInUser);
+                            case "unban": {
+                                Group.getGroup(lineParts[2]).unban(lineParts[3], loggedInUser);
                             }
                             case "change_id": {
-                                
-                                Group.getGroup(lineParts[2]).setGroupId(lineParts[3],loggedInUser);
+
+                                Group.getGroup(lineParts[2]).setGroupId(lineParts[3], loggedInUser);
                                 prLn("done");
                                 break;
                             }
                             case "change_name": {
-                                Group.getGroup(lineParts[2]).setGroupName(lineParts[3],loggedInUser);
+                                Group.getGroup(lineParts[2]).setGroupName(lineParts[3], loggedInUser);
                                 prLn("done");
                                 break;
                             }
@@ -293,21 +297,33 @@ public class App {
                             throw new IllegalArgumentException(
                                     "bad input\nuse the following syntax:\nedit_message [message id] [new context]");
                         }
+                        if (Message.getWithId(lineParts[1]).getOwnerId() != loggedInUser.getID()) {
+                            throw new IllegalAccessException("You are not the owner of this message!");
+                        }
                         Message.getWithId(lineParts[1]).setContext(lineParts[2]);
+                        prLn("done");
                         break;
                     }
                     case "ban_user": {
-                        if(loggedInUser==null){
+                        if (loggedInUser == null) {
                             throw new IllegalAccessException("Please login first");
                         }
                         String id = getInput("Who do you want to ban?");
                         loggedInUser.ban(User.getUser(id));
                     }
                     case "remove_message": {
-
+                        if (lineParts.length != 2) {
+                            throw new IllegalArgumentException(
+                                    "bad input\nuse the following syntax:\nremove_message [message id]");
+                        }
+                        if (Message.getWithId(lineParts[1]).getOwnerId() != loggedInUser.getID()) {
+                            throw new IllegalAccessException("You are not the owner of this message!");
+                        }
+                        Message.removeMessage(lineParts[1]);
+                        prLn("done");
                         break;
                     }
-                    default:{
+                    default: {
                         prLn("Bad command");
                     }
                 }
