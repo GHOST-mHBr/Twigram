@@ -1,6 +1,7 @@
 package oop.prj.model;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -50,7 +51,7 @@ public class Group implements Sendable {
         setAdmin(admin);
         setGroupId(groupId, admin);
         setGroupName(name, admin);
-        id = DBManager.getLastId(Group.class) + 1;
+        DBManager.insert(this);
         usersIds.add(admin.getID());
         allGroups.add(this);
     }
@@ -113,8 +114,7 @@ public class Group implements Sendable {
         try {
             Integer id = User.getUser(idStr).getID();
             if (banner == null) {
-                App.prLn("Please login first");
-                return;
+                throw new IllegalAccessException("Please login first");
             }
             if (banner.equals(admin)) {
                 if (!bannedIds.contains(id))
@@ -189,10 +189,22 @@ public class Group implements Sendable {
         App.prLn(res);
     }
 
-    public void printChat() {
+    public List<Message> getAllMessages() {
+        return messages.stream().map(e -> Message.getWithId(e)).collect(Collectors.toList());
+    }
+
+    public void printChat(User user) {
+        if (messages.size() == 0) {
+            App.prLn(colorize("No message yet!", ITALIC()));
+            return;
+        }
+        if (user != null) {
+            for (var msg : getAllMessages()) {
+                msg.seen(user);
+            }
+        }
         for (int i = 0; i < messages.size() - 1; i++) {
-            var msg = Message.getWithId(messages.get(i));
-            App.prLn(msg.toString());
+            App.prLn(Message.getWithId(messages.get(i)).toString());
             App.prLn(colorize("              ", GREEN_BACK()));
         }
         App.prLn(Message.getWithId(messages.get(messages.size() - 1)).toString());
@@ -283,5 +295,10 @@ public class Group implements Sendable {
         } catch (NumberFormatException e) {
             throw new NumberFormatException("Bad input for id");
         }
+    }
+
+    @Override
+    public void messageRemoved(Message msg) {
+        messages.remove(msg.getId());
     }
 }

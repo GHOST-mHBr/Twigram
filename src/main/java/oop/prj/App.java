@@ -4,12 +4,15 @@ import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+
 import oop.prj.DB.DBManager;
 import oop.prj.model.Comment;
 import oop.prj.model.Group;
 import oop.prj.model.Message;
 import oop.prj.model.Post;
+import oop.prj.model.Sendable;
 import oop.prj.model.User;
+import oop.prj.model.Message.MessageType;
 import oop.prj.model.User.UserType;
 
 public class App {
@@ -170,12 +173,12 @@ public class App {
                         }
                         prLn("Successful");
                         break;
-                    case "show_posts": {
+                    case "show_page": {
                         if (loggedInUser == null) {
                             throw new IllegalStateException("Please login first!");
                         }
-                        User user = User.getUser(getInput("Posts from who?"));
-                        user.printPosts(loggedInUser);
+                        User user = User.getUser(getInput("Enter id of the page owner"));
+                        user.printPage(loggedInUser);
 
                         break;
                     }
@@ -185,6 +188,7 @@ public class App {
                             throw new NullPointerException("Please login first");
                         }
                         loggedInUser.post(getInput("Enter your post text"));
+                        prLn("done");
                         break;
                     }
                     case "like": {
@@ -229,11 +233,11 @@ public class App {
                     case "group": {
                         if (lineParts.length < 4) {
                             throw new IllegalArgumentException(
-                                    "Bad usage\nuse the following syntax:\ngroup [add|remove|ban] [group id] [user id]\nor"
+                                    "Bad usage\nuse the following syntax:\ngroup [add|remove|ban|unban] [group id] [user id]\nor"
                                             +
                                             "\ngroup [change_name|change_id] [group id] [new name|new id]\nor" +
                                             "\ngroup create [group id] [group name]\nor" +
-                                            "group show [group id] [info|chat]\n");
+                                            "\ngroup show [group id] [info|chat]\n");
                         }
 
                         switch (lineParts[1]) {
@@ -259,6 +263,7 @@ public class App {
                             }
                             case "unban": {
                                 Group.getGroup(lineParts[2]).unban(lineParts[3], loggedInUser);
+                                break;
                             }
                             case "change_id": {
 
@@ -278,7 +283,7 @@ public class App {
                                         break;
                                     }
                                     case "chat": {
-                                        Group.getGroup(lineParts[3]).printChat();
+                                        Group.getGroup(lineParts[3]).printChat(loggedInUser);
                                         break;
                                     }
                                     default: {
@@ -300,6 +305,9 @@ public class App {
                         if (Message.getWithId(lineParts[1]).getOwnerId() != loggedInUser.getID()) {
                             throw new IllegalAccessException("You are not the owner of this message!");
                         }
+                        if(Message.getWithId(lineParts[1]).getType().equals(MessageType.REPLY)){
+                            throw new IllegalAccessException("Forwarded messages are not changeable!");
+                        }
                         Message.getWithId(lineParts[1]).setContext(lineParts[2]);
                         prLn("done");
                         break;
@@ -310,6 +318,7 @@ public class App {
                         }
                         String id = getInput("Who do you want to ban?");
                         loggedInUser.ban(User.getUser(id));
+                        break;
                     }
                     case "remove_message": {
                         if (lineParts.length != 2) {
@@ -321,6 +330,62 @@ public class App {
                         }
                         Message.removeMessage(lineParts[1]);
                         prLn("done");
+                        break;
+                    }
+                    case "reply": {
+                        if (loggedInUser == null) {
+                            throw new IllegalArgumentException("Please login first");
+                        }
+                        if (lineParts.length != 3) {
+                            throw new IllegalArgumentException(
+                                    "Bad syntax. use the following syntax:\nreply [replied message id] [your reply]");
+                        }
+                        Message.getWithId(lineParts[1]).reply(lineParts[2], loggedInUser);
+                        prLn("done");
+                        break;
+                    }
+
+                    case "forward": {
+                        if (loggedInUser == null) {
+                            throw new IllegalArgumentException("Please login first");
+                        }
+                        if (lineParts.length != 4 || (!lineParts[2].equals("group") && !lineParts[2].equals("user"))) {
+                            throw new IllegalArgumentException(
+                                    "Bad syntax. use the following syntax:\nforward [forwarded message id] [group|user] [receiver id]");
+                        }
+                        Sendable receiver = null;
+                        if (lineParts[2].toLowerCase().equals("group")) {
+                            receiver = Group.getGroup(lineParts[3]);
+                        } else {
+                            receiver = User.getUser(lineParts[3]);
+                        }
+                        Message.getWithId(lineParts[1]).forward(receiver,loggedInUser);
+                        break;
+                    }
+
+                    case "first_page": {
+                        if(loggedInUser==null){
+                            throw new NullPointerException("Please login first");
+                        }
+                        loggedInUser.firstPage(loggedInUser);
+                        break;
+                    }
+                    case "show_pv": {
+                        if(loggedInUser == null){
+                            throw new NullPointerException("Please login first");
+                        }
+                        String userId = getInput("Enter id of the user");
+                        loggedInUser.printPv(User.getUser(userId));
+                        break;
+                    }
+                    case "show_stats":{
+                        if(loggedInUser == null){
+                            throw new NullPointerException("Please login first");
+                        }
+                        if(loggedInUser.getType().equals(UserType.NORMAL)){
+                            throw new IllegalAccessException("This feature is for business accounts");
+                        }
+                        loggedInUser.showStats();
                         break;
                     }
                     default: {

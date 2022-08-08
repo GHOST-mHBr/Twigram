@@ -32,7 +32,7 @@ public class Comment extends Post {
         dateTime = LocalDateTime.now();
         ownerId = owner.getID();
         commentedPostId = post.getId();
-        setId(DBManager.getLastId(Comment.class) + 1);
+        DBManager.insert(this);
         allComments.add(this);
     }
 

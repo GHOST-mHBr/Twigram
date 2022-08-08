@@ -4,10 +4,9 @@ import java.time.LocalDateTime;
 
 import oop.prj.DB.DBAutoIncrement;
 import oop.prj.DB.DBField;
-import oop.prj.DB.DBManager;
 import oop.prj.DB.DBPrimaryKey;
 
-public abstract class RawMessage {
+public abstract class RawMessage{
 
     @DBPrimaryKey
     @DBAutoIncrement

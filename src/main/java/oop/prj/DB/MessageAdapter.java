@@ -63,7 +63,12 @@ public class MessageAdapter implements JsonSerializer<Message>, JsonDeserializer
         } else if (receiverClass.getSimpleName().equals("Group")) {
             receiver = Group.getWithId(receiverId);
         }
-        Message msg = new Message(context, User.getWithId(ownerId), receiver);
+        Message msg = null;
+        try {
+            msg = new Message(context, User.getWithId(ownerId), receiver);
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         msg.setId(messageId);
 
         return msg;

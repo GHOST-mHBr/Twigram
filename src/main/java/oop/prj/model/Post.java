@@ -34,7 +34,7 @@ public class Post extends RawMessage implements Comparable<Post> {
 
     protected Post(String context, User owner) {
         super(owner, context);
-        setId(DBManager.getLastId(Post.class) + 1);
+        DBManager.insert(this);
         allPosts.add(this);
     }
 

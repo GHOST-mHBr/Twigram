@@ -1,6 +1,8 @@
 package oop.prj.model;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
@@ -246,10 +248,19 @@ public class User implements Sendable {
         if (receiver == null) {
             throw new IllegalArgumentException("No such a receiver");
         }
+        try {
+            new Message(text, this, receiver);
+        } catch (IllegalAccessException e) {
+            throw new IllegalAccessException("You are banned from this chat :/");
+        }
+    }
 
-        Message msg = new Message(text, this, receiver);
-        sentMessagesIds.add(msg.getId());
-        receiver.messageReceived(msg);
+    public ArrayList<Integer> getSentMessagesIds() {
+        return sentMessagesIds;
+    }
+
+    public ArrayList<Integer> getReceivedMessagesIds() {
+        return receivedMessagesIds;
     }
 
     public void setPassword(String pass) {
@@ -268,12 +279,12 @@ public class User implements Sendable {
         return result;
     }
 
-    public ArrayList<Integer> getReceivedMsgsFrom(User sender) {
-        ArrayList<Integer> result = new ArrayList<>();
+    public ArrayList<Message> getReceivedMsgsFrom(User sender) {
+        ArrayList<Message> result = new ArrayList<>();
         for (Integer msgId : receivedMessagesIds) {
             var msg = Message.getWithId(msgId);
             if (msg.getOwner().equals(sender)) {
-                result.add(msg.getId());
+                result.add(msg);
             }
         }
         return result;
@@ -298,7 +309,10 @@ public class User implements Sendable {
     }
 
     @Override
-    public void messageReceived(Message msg) {
+    public void messageReceived(Message msg) throws IllegalAccessException {
+        if (bannedUsersIds.contains(msg.getOwnerId())) {
+            throw new IllegalAccessException("You are banned by the user" + colorize(":(", RED_TEXT()));
+        }
         receivedMessagesIds.add(msg.getId());
     }
 
@@ -372,6 +386,7 @@ public class User implements Sendable {
         ArrayList<Message> allMessages = new ArrayList<>();
         allMessages.addAll(getAllReceivedMessages());
         allMessages.addAll(getAllSentMessages());
+        Collections.sort(allMessages);
 
         if (allMessages.size() > 0) {
             for (var m : allMessages) {
@@ -389,6 +404,11 @@ public class User implements Sendable {
         }
     }
 
+    public void printPage(User watcher) {
+        pageWatches.add(new Seen(watcher));
+        printPosts(watcher);
+    }
+
     public void printPosts(User watcher) {
         for (Post post : postIds.stream().map(e -> Post.getWithId(e)).collect(Collectors.toList())) {
             post.addSeen(watcher);
@@ -402,6 +422,10 @@ public class User implements Sendable {
             App.prLn(post.toString());
             App.pr("\n");
         }
+    }
+
+    public UserType getType() {
+        return userType;
     }
 
     @Override
@@ -423,6 +447,60 @@ public class User implements Sendable {
         if (!bannedUsersIds.contains(id)) {
             bannedUsersIds.add(id);
         }
+    }
+
+    public void printPv(User friend) {
+        ArrayList<Message> chat = new ArrayList<>();
+        chat.addAll(getReceivedMsgsFrom(friend));
+        chat.addAll(getSentMsgsTo(friend));
+        Collections.sort(chat);
+        for (var m : chat) {
+            m.seen((User) m.getReceiver());
+            App.prLn(m.toString());
+        }
+    }
+
+    @Override
+    public void messageRemoved(Message msg) {
+        receivedMessagesIds.remove(msg.getId());
+    }
+
+    public void firstPage(User watcher) {
+        var friends = getAllFollowers();
+        friends.addAll(getAllFollowings());
+        for (var friend : friends) {
+            friend.printPosts(watcher);
+        }
+    }
+
+    public void showStats() {
+        String res = "";
+        res += colorize("Page statics:", WHITE_TEXT(), MAGENTA_BACK());
+        res += colorize("\n    |watches:\n", BLUE_TEXT());
+        for (var w : pageWatches) {
+            res += "      at: "
+                    + colorize(w.getDateTime().format(DateTimeFormatter.ofPattern("hh:mm a\n          yyyy-LLL-dd\n")),
+                            MAGENTA_TEXT());
+            res += "      by " + w.getUser().username + "\n";
+        }
+        res += colorize("Posts statistics", WHITE_TEXT(), CYAN_BACK())+"\n";
+        for (var p : postIds.stream().map(e -> Post.getWithId(e)).collect(Collectors.toList())) {
+            res += p.toString();
+            for (var w : p.getAllWatches()) {
+                res+="\n\n";
+                res += colorize("  watched at: ", BRIGHT_GREEN_TEXT()) + colorize(
+                        w.getDateTime().format(DateTimeFormatter.ofPattern("hh:mm a\n             yyyy-LLL-dd\n")),
+                        MAGENTA_TEXT());
+                res += colorize("  by " + w.getUser().username, BRIGHT_GREEN_TEXT()) + "\n";
+            }
+            for (var l : p.getAllLikes()) {
+                res += colorize("  liked at: ", RED_TEXT()) + colorize(
+                        l.getDateTime().format(DateTimeFormatter.ofPattern("hh:mm a\n       yyyy-LLL-dd\n")),
+                        MAGENTA_TEXT());
+                res += colorize("  by " + l.getLiker().username,RED_TEXT()) + "\n";
+            }
+        }
+        App.prLn(res);
     }
 
 }
