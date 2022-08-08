@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="608.0" prefWidth="964.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.theprojectphase2.MainPageController">
+   <left>
+      <BorderPane>
+         <center>
+            <BorderPane>
+               <center>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="1000.0" prefWidth="202.0">
+                     <content>
+                        <TabPane fx:id="the_list" onMouseClicked="#setChat" prefHeight="1000.0" prefWidth="198.0" rotateGraphic="true" tabClosingPolicy="UNAVAILABLE">
+                          <tabs>
+                              <Tab text="Chat">
+                                 <content>
+                                    <ScrollPane fitToHeight="true" fitToWidth="true">
+                                       <content>
+                                          <VBox fx:id="group_vbox" prefHeight="467.0" prefWidth="201.0" spacing="5.0" />
+                                       </content>
+                                    </ScrollPane>
+                                 </content>
+                              </Tab>
+                            <Tab text="New">
+                                 <content>
+                                    <ScrollPane fitToHeight="true" fitToWidth="true">
+                                       <content>
+                                          <VBox prefHeight="469.0" prefWidth="202.0" spacing="40.0" />
+                                       </content>
+                                    </ScrollPane>
+                                 </content>
+                              </Tab>
+                              <Tab text="Groups">
+                                 <content>
+                                    <ScrollPane fitToHeight="true" fitToWidth="true">
+                                       <content>
+                                          <VBox fx:id="group_vbox1" prefHeight="467.0" prefWidth="201.0" spacing="5.0" />
+                                       </content>
+                                    </ScrollPane>
+                                 </content>
+                              </Tab>
+                              <Tab text="PV">
+                                 <content>
+                                    <ScrollPane fitToHeight="true" fitToWidth="true">
+                                       <content>
+                                          <VBox fx:id="pv_vbox" prefHeight="467.0" prefWidth="201.0" spacing="5.0" />
+                                       </content>
+                                    </ScrollPane>
+                                 </content>
+                              </Tab>
+                          </tabs>
+                        </TabPane>
+                     </content>
+                  </ScrollPane>
+               </center>
+               <top>
+                  <AnchorPane prefHeight="34.0" prefWidth="202.0" BorderPane.alignment="CENTER">
+                     <children>
+                        <Button layoutY="1.0" mnemonicParsing="false" onAction="#OpenOptions" prefHeight="32.0" prefWidth="39.0" style="-fx-background-color: transparent;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="163.2">
+                           <graphic>
+                              <ImageView fitHeight="28.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@three-bars-icon1.jpg" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Button>
+                        <TextField fx:id="search_field" layoutX="47.0" layoutY="2.0" prefHeight="27.0" prefWidth="154.0" promptText="Search..." AnchorPane.leftAnchor="47.0" AnchorPane.rightAnchor="6.0" />
+                        <Button fx:id="search_button" layoutX="166.0" layoutY="2.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="34.0">
+                           <graphic>
+                              <ImageView fitHeight="20.0" fitWidth="23.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@search.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </Button>
+                     </children>
+                  </AnchorPane>
+               </top>
+            </BorderPane>
+         </center>
+         <left>
+            <VBox fx:id="setting" minWidth="-Infinity" prefHeight="608.0" prefWidth="171.0">
+               <children>
+                  <ImageView fx:id="main_image" fitHeight="191.0" fitWidth="159.0" pickOnBounds="true" preserveRatio="true" />
+                  <Label fx:id="main_label" prefHeight="74.0" prefWidth="162.0" translateX="10.0" />
+                  <Button fx:id="myposts_button" alignment="TOP_LEFT" mnemonicParsing="false" prefHeight="26.0" prefWidth="176.0" style="-fx-background-color: transparent;" text="MY POSTS">
+                     <graphic>
+                        <ImageView fitHeight="28.0" fitWidth="42.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@send.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="followerButton" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#ShowFollowers" prefHeight="26.0" prefWidth="177.0" style="-fx-background-color: transparent;" text="MY FOLLOWERS">
+                     <graphic>
+                        <ImageView fitHeight="26.0" fitWidth="35.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@follower.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="followingButton" alignment="TOP_LEFT" layoutX="10.0" layoutY="254.0" mnemonicParsing="false" onAction="#ShowFollowing" prefHeight="26.0" prefWidth="177.0" style="-fx-background-color: transparent;" text="MY FOLLOWINGS">
+                     <graphic>
+                        <ImageView fitHeight="26.0" fitWidth="35.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@follower.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="newGroup_button" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#CreateGroup" prefHeight="32.0" prefWidth="171.0" style="-fx-background-color: transparent;" text="CREATE NEW GROUP">
+                     <graphic>
+                        <ImageView fitHeight="31.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true" translateX="-3.0">
+                           <image>
+                              <Image url="@group.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="discover_people" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#ShowDiscoverPeople" prefHeight="36.0" prefWidth="171.0" style="-fx-background-color: transparent;" text="DISCOVER PEOPLE">
+                     <graphic>
+                        <ImageView fitHeight="31.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@discover-people.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="changeAccount_button" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#ChangeAccount" prefHeight="34.0" prefWidth="171.0" style="-fx-background-color: transparent;" text=" CHANGE ACCOUNT ">
+                     <graphic>
+                        <ImageView fitHeight="29.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@setting.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="logOut_button" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#LogOut" prefHeight="31.0" prefWidth="171.0" style="-fx-background-color: transparent;" text="  LOG OUT">
+                     <graphic>
+                        <ImageView fitHeight="27.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@logout.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </VBox>
+         </left>
+      </BorderPane>
+   </left>
+   <center>
+      <BorderPane>
+         <center>
+            <BorderPane>
+               <center>
+                  <ScrollPane fx:id="scroll_bar" fitToWidth="true" prefHeight="418.0" prefWidth="586.0">
+                     <content>
+                        <VBox fx:id="chat_box" prefHeight="406.0" prefWidth="586.0" spacing="10.0" />
+                     </content>
+                  </ScrollPane>
+               </center>
+               <top>
+                  <AnchorPane fx:id="title" minHeight="-Infinity" minWidth="-Infinity" prefHeight="75.0" prefWidth="586.0" BorderPane.alignment="CENTER">
+                     <children>
+                        <ImageView fx:id="title_image" fitHeight="104.0" fitWidth="116.0" layoutX="7.0" pickOnBounds="true" preserveRatio="true" AnchorPane.leftAnchor="7.0" AnchorPane.rightAnchor="462.0" />
+                        <Label fx:id="title_label" layoutX="101.0" layoutY="9.0" prefHeight="56.0" prefWidth="94.0" />
+                     </children>
+                  </AnchorPane>
+               </top>
+            </BorderPane>
+         </center>
+         <top>
+            <AnchorPane prefHeight="69.0" prefWidth="494.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button layoutX="421.0" layoutY="20.0" mnemonicParsing="false" onAction="#Post" prefHeight="30.0" prefWidth="52.0" style="-fx-background-color: transparent;" AnchorPane.rightAnchor="21.399999999999977">
+                     <graphic>
+                        <ImageView fitHeight="32.0" fitWidth="42.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@plus.png" />
+                           </image>
+                        </ImageView>
+                     </graphic></Button>
+               </children>
+            </AnchorPane>
+         </top>
+         <bottom>
+            <AnchorPane prefHeight="45.0" prefWidth="494.0" BorderPane.alignment="CENTER">
+               <children>
+                  <TextArea fx:id="main_type" layoutX="53.0" prefHeight="39.0" prefWidth="463.0" AnchorPane.leftAnchor="53.0" AnchorPane.rightAnchor="70.0" />
+                  <Button fx:id="send_button" layoutX="605.7999877929688" layoutY="6.0" mnemonicParsing="false" onAction="#Send" style="-fx-background-color: white; -fx-border-color: black;" AnchorPane.rightAnchor="14.200000000000045">
+                     <graphic>
+                        <ImageView fitHeight="23.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@send.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <Button fx:id="attachment" layoutY="1.0" mnemonicParsing="false" prefHeight="39.0" prefWidth="34.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="25.0" fitWidth="38.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@attachment.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </AnchorPane>
+         </bottom>
+      </BorderPane>
+   </center>
+</BorderPane>
