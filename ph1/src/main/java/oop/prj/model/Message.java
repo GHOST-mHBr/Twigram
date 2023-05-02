@@ -108,7 +108,7 @@ public class Message extends RawMessage implements Comparable<Message> {
         return receiver;
     }
 
-    public static Message getWithId(Integer id) {
+    public static Message getWithId(Integer id) throws NoSuchElementException{
         for (Message msg : allMessages) {
             if (msg.getId().equals(id)) {
                 return msg;

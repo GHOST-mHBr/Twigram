@@ -45,10 +45,10 @@ public class App {
     public static void main(String[] args) {
 
         // DBManager.createTableIfNotExist(NormalUser.class);
-        // DBManager.createTableIfNotExist(Group.class);
-        // DBManager.createTableIfNotExist(Comment.class);
-        // DBManager.createTableIfNotExist(User.class);
-        // DBManager.createTableIfNotExist(Post.class);
+        DBManager.createTableIfNotExist(Group.class);
+        DBManager.createTableIfNotExist(Comment.class);
+        DBManager.createTableIfNotExist(User.class);
+        DBManager.createTableIfNotExist(Post.class);
         // DBManager.createTableIfNotExist(BusinessUser.class);
         // DBManager.createTableIfNotExist(AdPost.class);
         DBManager.createTableIfNotExist(Message.class);
